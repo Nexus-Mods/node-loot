@@ -89,7 +89,7 @@ class LootAsync {
     // relay result, then process next request in the queue, if any
     try {
       if (msg.error) {
-        this.currentCallback(msg.error);
+        this.currentCallback(new Error(msg.error));
       } else {
         this.currentCallback(null, msg.result);
       }
