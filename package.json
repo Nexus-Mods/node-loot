@@ -5,14 +5,13 @@
   "scripts": {
     "autogypi": "autogypi",
     "node-gyp": "node-gyp",
-    "install": "autogypi && node-gyp configure --msvs_version=2015 build"
+    "install": "autogypi && node-gyp configure build"
   },
   "author": "Black Tree Gaming Ltd.",
   "license": "GPL-3.0",
   "dependencies": {
     "autogypi": "^0.2.2",
-    "nan": "^2.4.0",
-    "nbind": "^0.3.5",
+    "nbind": "^0.3.15",
     "node-gyp": "^3.4.0"
   }
 }
