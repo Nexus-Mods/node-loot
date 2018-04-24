@@ -1,16 +1,14 @@
 function attachBindings(binding) {
   binding.bind('PluginMetadata',
                function(name, messages, tags, cleanInfo, dirtyInfo,
-                        globalPriority, localPriority,
                         incompatibilities, loadAfterFiles, locations,
-                        requirements, isEnabled) {
+                        requirements, isEnabled, group) {
                  this.name = name;
                  this.messages = messages;
                  this.tags = tags;
                  this.cleanInfo = cleanInfo;
                  this.dirtyInfo = dirtyInfo;
-                 this.globalPriority = globalPriority[0];
-                 this.localPriority = localPriority[0];
+                 this.group = group;
                  this.incompatibilities = incompatibilities;
                  this.loadAfterFiles = loadAfterFiles;
                  this.locations = locations;
@@ -28,9 +26,9 @@ function attachBindings(binding) {
     this.displayName = displayName;
   });
 
-  binding.bind('Priority', function(value, isExplicit) {
-    this.value = value;
-    this.isExplicit = isExplicit;
+  binding.bind('Group', function(name, loadAfter) {
+    this.name = name;
+    this.loadAfter = loadAfter;
   });
 
   binding.bind('MasterlistInfo', function(revisionId, revisionDate, isModified) {

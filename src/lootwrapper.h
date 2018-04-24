@@ -5,24 +5,30 @@
 #include <map>
 #include <memory>
 #include <set>
-#include "nbind/nbind.h"
+#include <nbind/api.h>
 
 template <typename T, typename LootT> std::vector<T> transform(const std::vector<LootT> &input) {
   std::vector<T> result;
   for (const auto &ele : input) {
     result.push_back(ele);
   }
-  // std::copy(input.begin(), input.end(), result.begin());
   return result;
 }
 
 template <typename T, typename LootT> std::vector<T> transform(const std::set<LootT> &input) {
-  // std::vector<T> result(input.size());
-  // std::copy(input.begin(), input.end(), result.begin());
   std::vector<T> result;
   for (const auto &ele : input) {
     result.push_back(ele);
   }
+  return result;
+}
+
+template <typename T, typename LootT> std::vector<T> transform(const std::unordered_set<LootT> &input) {
+  std::vector<T> result;
+  for (const auto &ele : input) {
+    result.push_back(ele);
+  }
+
   return result;
 }
 
@@ -46,12 +52,12 @@ public:
   }
 };
 
-class Priority : public loot::Priority {
+class Group : public loot::Group {
 public:
-  Priority(const loot::Priority &reference) : loot::Priority(reference) {}
+  Group(const loot::Group &reference) : loot::Group(reference) {}
 
   void toJS(nbind::cbOutput output) const {
-    output(GetValue(), IsExplicit());
+    output(GetName(), transform<std::string>(GetAfterGroups()));
   }
 };
 
@@ -60,7 +66,7 @@ public:
   Tag(const loot::Tag &reference) : loot::Tag(reference) {}
 
   void toJS(nbind::cbOutput output) const {
-    output(this->GetName(), this->IsAddition(), this->IsConditional(), this->GetCondition());
+    output(GetName(), IsAddition(), IsConditional(), GetCondition());
   }
 };
 
@@ -129,12 +135,8 @@ public:
     return m_Wrapped.IsEnabled();
   }
 
-  Priority GetGlobalPriority() const {
-    return m_Wrapped.GetGlobalPriority();
-  }
-
-  Priority GetLocalPriority() const {
-    return m_Wrapped.GetLocalPriority();
+  std::string GetGroup() const {
+    return m_Wrapped.GetGroup();
   }
 
   std::vector<Tag> GetTags() const {
@@ -179,11 +181,14 @@ private:
   std::string m_Language;
 };
 
+typedef nbind::cbFunction LogFunc;
+
 class Loot {
 
 public:
 
-  Loot(std::string gameId, std::string gamePath, std::string gameLocalPath, std::string language);
+  Loot(std::string gameId, std::string gamePath, std::string gameLocalPath, std::string language,
+       LogFunc logCallback);
 
   bool updateMasterlist(std::string masterlistPath, std::string remoteUrl, std::string remoteBranch);
 
@@ -195,6 +200,12 @@ public:
 
   std::vector<std::string> sortPlugins(std::vector<std::string> input);
 
+  std::vector<Group> getGroups(bool includeUserMetadata = true) const;
+
+  std::vector<Group> getUserGroups() const;
+
+  void setUserGroups(const std::vector<Group>& groups);
+
 private:
 
   loot::GameType convertGameId(const std::string &gameId) const;
@@ -203,8 +214,11 @@ private:
 
   std::string m_Language;
   std::shared_ptr<loot::GameInterface> m_Game;
+  nbind::cbFunction m_LogCallback;
 
 };
+
+#include <nbind/nbind.h>
 
 NBIND_CLASS(MasterlistInfo) {
   getter(getRevisionId);
@@ -222,10 +236,9 @@ NBIND_CLASS(Tag) {
   getter(GetName);
 }
 
-NBIND_CLASS(Priority) {
-  getter(GetValue);
-  getter(IsExplicit);
-  method(toJS);
+NBIND_CLASS(Group) {
+  getter(GetName);
+  getter(GetAfterGroups);
 }
 
 NBIND_CLASS(Message) {
@@ -243,14 +256,13 @@ NBIND_CLASS(PluginMetadata) {
   getter(GetTags);
   getter(GetCleanInfo);
   getter(GetDirtyInfo);
-  getter(GetGlobalPriority);
   getter(GetIncompatibilities);
   getter(GetLoadAfterFiles);
-  getter(GetLocalPriority);
   getter(GetLocations);
   getter(GetRequirements);
   getter(GetMessages);
   getter(IsEnabled);
+  getter(GetGroup);
 }
  
 NBIND_CLASS(PluginCleaningData) {
@@ -268,12 +280,15 @@ NBIND_CLASS(Location) {
 }
 
 NBIND_CLASS(Loot) {
-  construct<std::string, std::string, std::string, std::string>();
+  construct<std::string, std::string, std::string, std::string, LogFunc>();
   method(updateMasterlist);
   method(getMasterlistRevision);
   method(loadLists);
   method(getPluginMetadata);
   method(sortPlugins);
+  method(getGroups);
+  method(getUserGroups);
+  method(setUserGroups);
 }
 
 using loot::IsCompatible;

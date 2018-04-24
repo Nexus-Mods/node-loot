@@ -115,11 +115,16 @@ private:
   std::function<void()> m_IntCallback;
 };
 
-Loot::Loot(std::string gameId, std::string gamePath, std::string gameLocalPath, std::string language)
+Loot::Loot(std::string gameId, std::string gamePath, std::string gameLocalPath, std::string language,
+           LogFunc logCallback)
   : m_Language(language)
+  , m_LogCallback(logCallback)
 {
   try {
     loot::InitialiseLocale(language);
+    loot::SetLoggingCallback([this](loot::LogLevel level, const char *message) {
+      this->m_LogCallback(static_cast<int>(level), message);
+    });
     m_Game = loot::CreateGameHandle(convertGameId(gameId), gamePath, gameLocalPath);
   }
   catch (const std::exception &e) {
@@ -175,11 +180,29 @@ std::vector<std::string> Loot::sortPlugins(std::vector<std::string> input)
   return m_Game->SortPlugins(input);
 }
 
+std::vector<Group> Loot::getGroups(bool includeUserMetadata) const
+{
+  return transform<Group>(m_Game->GetDatabase()->GetGroups(includeUserMetadata));
+}
+
+std::vector<Group> Loot::getUserGroups() const {
+  return transform<Group>(m_Game->GetDatabase()->GetUserGroups());
+}
+
+void Loot::setUserGroups(const std::vector<Group>& groups) {
+  std::unordered_set<loot::Group> result;
+  for (const auto &ele : groups) {
+    result.insert(ele);
+  }
+  m_Game->GetDatabase()->SetUserGroups(result);
+}
+
 loot::GameType Loot::convertGameId(const std::string &gameId) const {
   std::map<std::string, loot::GameType> gameMap{
     { "oblivion", loot::GameType::tes4 },
     { "skyrim", loot::GameType::tes5 },
     { "skyrimse", loot::GameType::tes5se },
+    { "skyrimvr", loot::GameType::tes5vr },
     { "fallout3", loot::GameType::fo3 },
     { "falloutnv", loot::GameType::fonv },
     { "fallout4", loot::GameType::fo4 },
@@ -200,9 +223,8 @@ PluginMetadata::PluginMetadata(const loot::PluginMetadata &reference, const std:
 
 void PluginMetadata::toJS(nbind::cbOutput output) const {
   output(GetName(), GetMessages(), GetTags(), GetCleanInfo(), GetDirtyInfo(),
-    std::vector<Priority>{ GetGlobalPriority() }, std::vector<Priority>{GetLocalPriority()},
     GetIncompatibilities(), GetLoadAfterFiles(), GetLocations(), GetRequirements(),
-    IsEnabled());
+    IsEnabled(), GetGroup());
 }
 
 inline MasterlistInfo::MasterlistInfo(loot::MasterlistInfo info)

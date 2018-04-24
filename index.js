@@ -49,6 +49,9 @@ class LootAsync {
     this.makeProxy('loadLists');
     this.makeProxy('getPluginMetadata');
     this.makeProxy('sortPlugins');
+    this.makeProxy('getGroups');
+    this.makeProxy('getUserGroups');
+    this.makeProxy('setUserGroups');
 
     this.worker = fork(`${__dirname}${path.sep}async.js`);
     this.worker.on('message', (...args) => this.handleResponse(...args));
