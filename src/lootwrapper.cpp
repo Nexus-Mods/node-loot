@@ -122,9 +122,12 @@ Loot::Loot(std::string gameId, std::string gamePath, std::string gameLocalPath, 
 {
   try {
     loot::InitialiseLocale(language);
+    /*
+    TODO: Disabled for now because it causes the process to hang when calling sortPlugins.
     loot::SetLoggingCallback([this](loot::LogLevel level, const char *message) {
       this->m_LogCallback(static_cast<int>(level), message);
     });
+    */
     m_Game = loot::CreateGameHandle(convertGameId(gameId), gamePath, gameLocalPath);
   }
   catch (const std::exception &e) {
