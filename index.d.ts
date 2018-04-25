@@ -18,6 +18,11 @@ export class Location extends NBindBase {
 	name: string;
 }
 
+export class Group extends NBindBase {
+	name: string;
+	afterGroups: string[];
+}
+
 export class Loot extends NBindBase {
 	constructor(gameId: string, gamePath: string, gameLocalPath: string, language: string);
 
@@ -26,6 +31,9 @@ export class Loot extends NBindBase {
 	loadLists(masterlistPath: string, userlistPath: string): void;
 	getPluginMetadata(pluginName: string): PluginMetadata;
 	sortPlugins(pluginNames: string[]): string[];
+	getGroups(includeUserGroups: boolean): Group[];
+	getUserGroups(): Group[];
+	setUserGroups(groups: Group[]);
 }
 
 export class LootAsync {
@@ -36,6 +44,9 @@ export class LootAsync {
   loadLists(masterlistPath: string, userlistPath: string, callback: (err: Error) => void): void;
   getPluginMetadata(pluginName: string, callback: (err: Error, meta: PluginMetadata) => void): void;
   sortPlugins(pluginNames: string[], callback: (err: Error, sorted: string[]) => void): void;
+  getGroups(includeUserGroups: boolean): Group[];
+  getUserGroups(): Group[];
+  setUserGroups(groups: Group[]);
 };
 
 export class MasterlistInfo extends NBindBase {
