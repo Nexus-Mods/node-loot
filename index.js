@@ -19,8 +19,8 @@ attachBindings(binding);
 const lib = binding.lib;
 
 class LootAsync {
-  static create(gameId, gamePath, gameLocalPath, language, callback) {
-    const res = new LootAsync(gameId, gamePath, gameLocalPath, language, (err) => {
+  static create(gameId, gamePath, gameLocalPath, language, logCallback, callback) {
+    const res = new LootAsync(gameId, gamePath, gameLocalPath, language, logCallback, (err) => {
       if (err !== null) {
         callback(err);
       } else {
@@ -29,8 +29,9 @@ class LootAsync {
     });
   }
 
-  constructor(gameId, gamePath, gameLocalPath, language, callback) {
+  constructor(gameId, gamePath, gameLocalPath, language, logCallback, callback) {
     this.queue = [];
+    this.logCallback = logCallback;
 
     this.currentCallback = () => {
       this.enqueue({
@@ -89,6 +90,12 @@ class LootAsync {
   }
 
   handleResponse(msg) {
+    // don't touch the queue when relaying logs
+    if (msg.log) {
+      this.logCallback(msg.log.level, msg.log.message);
+      return;
+    }
+
     // relay result, then process next request in the queue, if any
     try {
       if (msg.error) {

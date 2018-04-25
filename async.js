@@ -15,11 +15,18 @@ const lib = binding.lib;
 
 let instance;
 
+function logCallback(level, message) {
+  // don't relay trace and debug. Make this configurable in the future
+  if (level > 1) {
+    process.send({ log: { level, message } });
+  }
+}
+
 process.on('message', event => {
   let result;
   try {
     if (event.type === 'init') {
-      instance = new lib.Loot(...event.args);
+      instance = new lib.Loot(...event.args, logCallback);
     } else {
       result = instance[event.type](...event.args);
     }
