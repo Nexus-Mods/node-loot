@@ -77,7 +77,12 @@ class LootAsync {
 
   deliver(message, callback) {
     this.currentCallback = callback;
-    this.worker.send(message);
+    try {
+      this.worker.send(message);
+    } catch (err) {
+      this.currentCallback(new Error('LOOT closed? Please check your log. Error was: ' + err.message));
+      this.processQueue();
+    }
   }
 
   processQueue() {
