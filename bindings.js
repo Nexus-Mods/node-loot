@@ -16,6 +16,21 @@ function attachBindings(binding) {
                  this.isEnabled = isEnabled;
                });
 
+  binding.bind('PluginInterface',
+               function(name, lowercasedName, version, masters, bashTags, crc,
+                        isMaster, isLightMaster, isEmpty, loadsArchive) {
+                 this.name = name;
+                 this.lowercasedName = lowercasedName;
+                 this.version = version;
+                 this.masters = masters;
+                 this.bashTags = bashTags;
+                 this.crc = crc;
+                 this.isMaster = isMaster;
+                 this.isLightMaster = isLightMaster;
+                 this.isEmpty = isEmpty;
+                 this.loadsArchive = loadsArchive;
+               });
+
   binding.bind('Message', function(type, value) {
     this.type = type;
     this.value = value;

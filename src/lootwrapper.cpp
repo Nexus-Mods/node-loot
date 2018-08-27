@@ -5,6 +5,7 @@
 #include <future>
 #include <nan.h>
 #include <sstream>
+#include <memory>
 
 struct UnsupportedGame : public std::runtime_error {
   UnsupportedGame() : std::runtime_error("game not supported") {}
@@ -158,6 +159,15 @@ void Loot::loadLists(std::string masterlistPath, std::string userlistPath)
   }
 }
 
+void Loot::loadPlugins(std::vector<std::string> plugins, bool loadHeadersOnly) {
+  try {
+    m_Game->LoadPlugins(plugins, loadHeadersOnly);
+  }
+  catch (const std::exception &e) {
+    NBIND_ERR(e.what());
+  }
+}
+
 PluginMetadata Loot::getPluginMetadata(std::string plugin)
 {
   try {
@@ -166,6 +176,17 @@ PluginMetadata Loot::getPluginMetadata(std::string plugin)
   catch (const std::exception &e) {
     NBIND_ERR(e.what());
     return PluginMetadata(loot::PluginMetadata(), m_Language);
+  }
+}
+
+PluginInterface Loot::getPlugin(const std::string &pluginName)
+{
+  try {
+    return PluginInterface(m_Game->GetPlugin(pluginName));
+  }
+  catch (const std::exception &e) {
+    NBIND_ERR(e.what());
+    return PluginInterface(std::shared_ptr<loot::PluginInterface>());
   }
 }
 

@@ -48,6 +48,8 @@ class LootAsync {
     this.makeProxy('updateMasterlist');
     this.makeProxy('getMasterlistRevision');
     this.makeProxy('loadLists');
+    this.makeProxy('loadPlugins');
+    this.makeProxy('getPlugin');
     this.makeProxy('getPluginMetadata');
     this.makeProxy('sortPlugins');
     this.makeProxy('getGroups');

@@ -1,6 +1,6 @@
 {
   "name": "loot",
-  "version": "1.1.5",
+  "version": "1.2.0",
   "description": "Wrapper around the LOOT library for sorting plugins of gamebryo games (Oblivion, Skyrim, Fallout 3/NV/4)",
   "scripts": {
     "autogypi": "autogypi",
