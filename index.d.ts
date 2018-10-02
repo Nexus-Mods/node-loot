@@ -24,19 +24,21 @@ export class Group extends NBindBase {
 }
 
 export class Loot extends NBindBase {
-	constructor(gameId: string, gamePath: string, gameLocalPath: string, language: string);
+  constructor(gameId: string, gamePath: string, gameLocalPath: string, language: string);
 
-	updateMasterlist(masterlistPath: string, repoUrl: string, repoBranch: string): boolean;
-	getMasterlistRevision(masterlistPath: string, getShortId: boolean): MasterlistInfo;
-	loadLists(masterlistPath: string, userlistPath: string): void;
-	getPluginMetadata(pluginName: string): PluginMetadata;
-	sortPlugins(pluginNames: string[]): string[];
-	setLoadOrder(pluginNames: string[]): void;
-	getLoadOrder(): string[];
-	loadCurrentLoadOrderState(): void;
-	getGroups(includeUserGroups: boolean): Group[];
-	getUserGroups(): Group[];
-	setUserGroups(groups: Group[]);
+  updateMasterlist(masterlistPath: string, repoUrl: string, repoBranch: string): boolean;
+  getMasterlistRevision(masterlistPath: string, getShortId: boolean): MasterlistInfo;
+  loadLists(masterlistPath: string, userlistPath: string): void;
+  getPluginMetadata(pluginName: string): PluginMetadata;
+  sortPlugins(pluginNames: string[]): string[];
+  setLoadOrder(pluginNames: string[]): void;
+  getLoadOrder(): string[];
+  loadCurrentLoadOrderState(): void;
+  isPluginActive(pluginName: string): boolean;
+  getGroups(includeUserGroups: boolean): Group[];
+  getUserGroups(): Group[];
+  setUserGroups(groups: Group[]);
+  getGeneralMessages(evaluateConditions: boolean): Message[];
 }
 
 export class LootAsync {
@@ -48,11 +50,13 @@ export class LootAsync {
   getPluginMetadata(pluginName: string, callback: (err: Error, meta: PluginMetadata) => void): void;
   sortPlugins(pluginNames: string[], callback: (err: Error, sorted: string[]) => void): void;
   setLoadOrder(pluginNames: string[]): void;
+  getLoadOrder(): string[];
   loadCurrentLoadOrderState(): void;
   isPluginActive(pluginName: string): boolean;
   getGroups(includeUserGroups: boolean): Group[];
   getUserGroups(): Group[];
   setUserGroups(groups: Group[]);
+  getGeneralMessages(evaluateConditions: boolean): Message[];
 };
 
 export class MasterlistInfo extends NBindBase {

@@ -241,6 +241,15 @@ void Loot::setUserGroups(const std::vector<Group>& groups) {
   m_Game->GetDatabase()->SetUserGroups(result);
 }
 
+std::vector<Message> Loot::getGeneralMessages(bool evaluateConditions) const {
+  const std::vector<loot::Message> messages = m_Game->GetDatabase()->GetGeneralMessages(evaluateConditions);
+  std::vector<Message> result;
+  for (const auto &msg : messages) {
+    result.push_back(Message(msg, m_Language));
+  }
+  return result;
+}
+
 loot::GameType Loot::convertGameId(const std::string &gameId) const {
   std::map<std::string, loot::GameType> gameMap{
     { "oblivion", loot::GameType::tes4 },

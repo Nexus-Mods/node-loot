@@ -258,6 +258,8 @@ public:
 
   void setUserGroups(const std::vector<Group>& groups);
 
+  std::vector<Message> getGeneralMessages(bool evaluateConditions = false) const;
+
 private:
 
   loot::GameType convertGameId(const std::string &gameId) const;
@@ -362,6 +364,7 @@ NBIND_CLASS(Loot) {
   method(getGroups);
   method(getUserGroups);
   method(setUserGroups);
+  method(getGeneralMessages);
 }
 
 using loot::IsCompatible;

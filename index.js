@@ -59,6 +59,7 @@ class LootAsync {
     this.makeProxy('getGroups');
     this.makeProxy('getUserGroups');
     this.makeProxy('setUserGroups');
+    this.makeProxy('getGeneralMessages');
 
     this.worker = fork(`${__dirname}${path.sep}async.js`);
     this.worker.on('message', (...args) => this.handleResponse(...args));
