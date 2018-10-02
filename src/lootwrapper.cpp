@@ -182,7 +182,11 @@ PluginMetadata Loot::getPluginMetadata(std::string plugin)
 PluginInterface Loot::getPlugin(const std::string &pluginName)
 {
   try {
-    return PluginInterface(m_Game->GetPlugin(pluginName));
+    auto plugin = m_Game->GetPlugin(pluginName);
+    if (plugin.get() == nullptr) {
+      NBIND_ERR("Invalid plugin name");
+    }
+    return PluginInterface(plugin);
   }
   catch (const std::exception &e) {
     NBIND_ERR(e.what());
@@ -202,6 +206,22 @@ MasterlistInfo Loot::getMasterlistRevision(std::string masterlistPath, bool getS
 std::vector<std::string> Loot::sortPlugins(std::vector<std::string> input)
 {
   return m_Game->SortPlugins(input);
+}
+
+void Loot::setLoadOrder(std::vector<std::string> input) {
+  return m_Game->SetLoadOrder(input);
+}
+
+std::vector<std::string> Loot::getLoadOrder() const {
+  return m_Game->GetLoadOrder();
+}
+
+void Loot::loadCurrentLoadOrderState() {
+  return m_Game->LoadCurrentLoadOrderState();
+}
+
+bool Loot::isPluginActive(const std::string &pluginName) const {
+  return m_Game->IsPluginActive(pluginName);
 }
 
 std::vector<Group> Loot::getGroups(bool includeUserMetadata) const

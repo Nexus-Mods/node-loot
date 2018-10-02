@@ -31,6 +31,9 @@ export class Loot extends NBindBase {
 	loadLists(masterlistPath: string, userlistPath: string): void;
 	getPluginMetadata(pluginName: string): PluginMetadata;
 	sortPlugins(pluginNames: string[]): string[];
+	setLoadOrder(pluginNames: string[]): void;
+	getLoadOrder(): string[];
+	loadCurrentLoadOrderState(): void;
 	getGroups(includeUserGroups: boolean): Group[];
 	getUserGroups(): Group[];
 	setUserGroups(groups: Group[]);
@@ -44,6 +47,9 @@ export class LootAsync {
   loadLists(masterlistPath: string, userlistPath: string, callback: (err: Error) => void): void;
   getPluginMetadata(pluginName: string, callback: (err: Error, meta: PluginMetadata) => void): void;
   sortPlugins(pluginNames: string[], callback: (err: Error, sorted: string[]) => void): void;
+  setLoadOrder(pluginNames: string[]): void;
+  loadCurrentLoadOrderState(): void;
+  isPluginActive(pluginName: string): boolean;
   getGroups(includeUserGroups: boolean): Group[];
   getUserGroups(): Group[];
   setUserGroups(groups: Group[]);

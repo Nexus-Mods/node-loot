@@ -52,6 +52,10 @@ class LootAsync {
     this.makeProxy('getPlugin');
     this.makeProxy('getPluginMetadata');
     this.makeProxy('sortPlugins');
+    this.makeProxy('setLoadOrder');
+    this.makeProxy('getLoadOrder');
+    this.makeProxy('loadCurrentLoadOrderState');
+    this.makeProxy('isPluginActive');
     this.makeProxy('getGroups');
     this.makeProxy('getUserGroups');
     this.makeProxy('setUserGroups');
