@@ -67,10 +67,10 @@ class LootAsync {
   }
 
   close() {
-    this.didClose = true;
     this.enqueue({ type: 'terminate' }, () => {
       this.worker = undefined;
     });
+    this.didClose = true;
   }
 
   makeProxy(name) {
