@@ -32,6 +32,7 @@ class LootAsync {
   constructor(gameId, gamePath, gameLocalPath, language, logCallback, callback) {
     this.queue = [];
     this.logCallback = logCallback;
+    this.didClose = false;
 
     this.currentCallback = () => {
       this.enqueue({
@@ -65,16 +66,30 @@ class LootAsync {
     this.worker.on('message', (...args) => this.handleResponse(...args));
   }
 
+  close() {
+    this.didClose = true;
+    this.enqueue({ type: 'terminate' }, () => {
+      this.worker = undefined;
+    });
+  }
+
   makeProxy(name) {
     this[name] = (...args) => {
+      let cb = args[args.length - 1];
+      if (typeof(cb) !== 'function') {
+        cb = undefined;
+      }
       this.enqueue({
         type: name,
         args: args.slice(0, args.length - 1),
-      }, args[args.length - 1]);
+      }, cb);
     };
   }
 
   enqueue(message, callback) {
+    if (this.didClose) {
+      return callback(new Error('already closed'));
+    }
     if (this.currentCallback === null) {
       this.deliver(message, callback);
     } else {
