@@ -73,6 +73,10 @@ class LootAsync {
     this.didClose = true;
   }
 
+  isClosed() {
+    return this.didClose;
+  }
+
   makeProxy(name) {
     this[name] = (...args) => {
       let cb = args[args.length - 1];
