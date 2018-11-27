@@ -1,4 +1,5 @@
 const nbind = require('nbind');
+const net = require('net');
 const attachBindings = require('./bindings');
 
 let binding;
@@ -13,28 +14,38 @@ attachBindings(binding);
 
 const lib = binding.lib;
 
-let instance;
+const client = net.connect(`\\\\?\\pipe\\loot-ipc-${process.argv[2]}`, (arg) => {
+  let instance;
 
-function logCallback(level, message) {
-  // don't relay trace and debug. Make this configurable in the future
-  if (level > 1) {
-    process.send({ log: { level, message } });
+  function send(args) {
+    client.write(JSON.stringify(args));
   }
-}
 
-process.on('message', event => {
-  let result;
-  try {
-    if (event.type === 'init') {
-      instance = new lib.Loot(...event.args, logCallback);
-    } else {
-      result = instance[event.type](...event.args);
+  function handleEvent(event) {
+    let result;
+    try {
+      if (event.type === 'init') {
+        instance = new lib.Loot(...event.args, logCallback);
+      } else {
+        result = instance[event.type](...event.args);
+      }
+      send({ result });
+    } catch (error) {
+      send({ error: error.message });
     }
-    process.send({ result });
-  } catch (error) {
-    process.send({ error: error.message });
   }
-});
 
-// signal readiness to process messages
-process.send({ result: null });
+  function logCallback(level, message) {
+    // don't relay trace and debug. Make this configurable in the future
+    if (level > 1) {
+      send({ log: { level, message } });
+    }
+  }
+
+  client.on('data', buffer => {
+    handleEvent(JSON.parse(buffer.toString()));
+  });
+
+  // signal readiness to process messages
+  send({ result: null });
+});
