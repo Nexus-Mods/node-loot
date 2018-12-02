@@ -19,8 +19,8 @@ attachBindings(binding);
 const lib = binding.lib;
 
 class LootAsync {
-  static create(gameId, gamePath, gameLocalPath, language, logCallback, callback) {
-    const res = new LootAsync(gameId, gamePath, gameLocalPath, language, logCallback, (err) => {
+  static create(gameId, gamePath, gameLocalPath, language, logCallback, onFork, callback) {
+    const res = new LootAsync(gameId, gamePath, gameLocalPath, language, logCallback, onFork, (err) => {
       if (err !== null) {
         callback(err);
       } else {

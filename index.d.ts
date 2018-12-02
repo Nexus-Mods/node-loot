@@ -24,7 +24,7 @@ export class Group extends NBindBase {
 }
 
 export class Loot extends NBindBase {
-	constructor(gameId: string, gamePath: string, gameLocalPath: string, language: string);
+	constructor(gameId: string, gamePath: string, gameLocalPath: string, language: string, logCallback: (level: number, message: string) => void, onFork: (module: string, args: string[]) => void);
 
 	updateMasterlist(masterlistPath: string, repoUrl: string, repoBranch: string): boolean;
 	getMasterlistRevision(masterlistPath: string, getShortId: boolean): MasterlistInfo;
@@ -37,7 +37,7 @@ export class Loot extends NBindBase {
 }
 
 export class LootAsync {
-  static create(gameId: string, gamePath: string, gameLocalPath: string, language: string): LootAsync;
+  static create(gameId: string, gamePath: string, gameLocalPath: string, language: string, logCallback: (level: number, message: string) => void, onFork: (module: string, args: string[]) => void): LootAsync;
 
   updateMasterlist(masterlistPath: string, repoUrl: string, repoBranch: string, callback: (err: Error, didUpdate: boolean) => void): void;
   getMasterlistRevision(masterlistPath: string, getShortId: boolean, callback: (err: Error, info: MasterlistInfo) => void): void;
