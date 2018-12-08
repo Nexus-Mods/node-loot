@@ -32,6 +32,7 @@ class LootAsync {
   constructor(gameId, gamePath, gameLocalPath, language, logCallback, onFork, callback) {
     this.queue = [];
     this.logCallback = logCallback;
+    this.didClose = false;
 
     this.currentCallback = () => {
       this.enqueue({
@@ -52,9 +53,14 @@ class LootAsync {
     this.makeProxy('getPlugin');
     this.makeProxy('getPluginMetadata');
     this.makeProxy('sortPlugins');
+    this.makeProxy('setLoadOrder');
+    this.makeProxy('getLoadOrder');
+    this.makeProxy('loadCurrentLoadOrderState');
+    this.makeProxy('isPluginActive');
     this.makeProxy('getGroups');
     this.makeProxy('getUserGroups');
     this.makeProxy('setUserGroups');
+    this.makeProxy('getGeneralMessages');
 
     const id = this.generateId();
     this.ipc = new net.Server();
@@ -79,16 +85,34 @@ class LootAsync {
     return res.join('');
   }
 
+  close() {
+    this.enqueue({ type: 'terminate' }, () => {
+      this.worker = undefined;
+    });
+    this.didClose = true;
+  }
+
+  isClosed() {
+    return this.didClose;
+  }
+
   makeProxy(name) {
     this[name] = (...args) => {
+      let cb = args[args.length - 1];
+      if (typeof(cb) !== 'function') {
+        cb = undefined;
+      }
       this.enqueue({
         type: name,
         args: args.slice(0, args.length - 1),
-      }, args[args.length - 1]);
+      }, cb);
     };
   }
 
   enqueue(message, callback) {
+    if (this.didClose) {
+      return callback(new Error('already closed'));
+    }
     if (this.currentCallback === null) {
       this.deliver(message, callback);
     } else {
@@ -124,10 +148,12 @@ class LootAsync {
 
     // relay result, then process next request in the queue, if any
     try {
-      if (msg.error) {
-        this.currentCallback(new Error(msg.error));
-      } else {
-        this.currentCallback(null, msg.result);
+      if (!!this.currentCallback) {
+        if (msg.error) {
+          this.currentCallback(new Error(msg.error));
+        } else {
+          this.currentCallback(null, msg.result);
+        }
       }
       this.processQueue();
     } catch (err) {

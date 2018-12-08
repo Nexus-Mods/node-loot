@@ -126,7 +126,12 @@ public:
   bool DoFormIDsOverlap(const PluginInterface &plugin) const { return m_Reference->DoFormIDsOverlap(*(plugin.m_Reference)); }
 
   void toJS(nbind::cbOutput output) const {
-    output(GetName(), GetLowercasedName(), GetVersion(), GetMasters(), GetBashTags(), GetCRC(), IsMaster(), IsLightMaster(), IsEmpty(), LoadsArchive());
+    if (m_Reference.get() == nullptr) {
+      output(nullptr);
+    }
+    else {
+      output(GetName(), GetLowercasedName(), GetVersion(), GetMasters(), GetBashTags(), GetCRC(), IsMaster(), IsLightMaster(), IsEmpty(), LoadsArchive());
+    }
   }
 
 private:
@@ -239,11 +244,21 @@ public:
 
   std::vector<std::string> sortPlugins(std::vector<std::string> input);
 
+  void setLoadOrder(std::vector<std::string> input);
+
+  std::vector<std::string> getLoadOrder() const;
+
+  void loadCurrentLoadOrderState();
+
+  bool isPluginActive(const std::string &pluginName) const;
+
   std::vector<Group> getGroups(bool includeUserMetadata = true) const;
 
   std::vector<Group> getUserGroups() const;
 
   void setUserGroups(const std::vector<Group>& groups);
+
+  std::vector<Message> getGeneralMessages(bool evaluateConditions = false) const;
 
 private:
 
@@ -342,9 +357,14 @@ NBIND_CLASS(Loot) {
   method(getPlugin);
   method(getPluginMetadata);
   method(sortPlugins);
+  method(setLoadOrder);
+  method(getLoadOrder);
+  method(loadCurrentLoadOrderState);
+  method(isPluginActive);
   method(getGroups);
   method(getUserGroups);
   method(setUserGroups);
+  method(getGeneralMessages);
 }
 
 using loot::IsCompatible;

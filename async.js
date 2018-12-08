@@ -26,6 +26,9 @@ const client = net.connect(`\\\\?\\pipe\\loot-ipc-${process.argv[2]}`, (arg) => 
     try {
       if (event.type === 'init') {
         instance = new lib.Loot(...event.args, logCallback);
+      } else if (event.type === 'terminate') {
+        send({});
+        process.exit(0);
       } else {
         result = instance[event.type](...event.args);
       }
