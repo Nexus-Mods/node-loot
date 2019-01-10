@@ -23,8 +23,11 @@ export class Group extends NBindBase {
 	afterGroups: string[];
 }
 
+export type LogCallback = (level: number, message: string) => void;
+export type ForkFunction = (module: string, args: string[]) => void;
+
 export class Loot extends NBindBase {
-	constructor(gameId: string, gamePath: string, gameLocalPath: string, language: string, logCallback: (level: number, message: string) => void, onFork: (module: string, args: string[]) => void);
+	constructor(gameId: string, gamePath: string, gameLocalPath: string, language: string, logCallback: LogCallback, onFork: ForkFunction): Loot;
 
 	updateMasterlist(masterlistPath: string, repoUrl: string, repoBranch: string): boolean;
 	getMasterlistRevision(masterlistPath: string, getShortId: boolean): MasterlistInfo;
@@ -42,7 +45,7 @@ export class Loot extends NBindBase {
 }
 
 export class LootAsync {
-  static create(gameId: string, gamePath: string, gameLocalPath: string, language: string, logCallback: (level: number, message: string) => void, onFork: (module: string, args: string[]) => void): LootAsync;
+  static create(gameId: string, gamePath: string, gameLocalPath: string, language: string, logCallback: LogCallback, onFork: ForkFunction): LootAsync;
   close(): void;
 
   updateMasterlist(masterlistPath: string, repoUrl: string, repoBranch: string, callback: (err: Error, didUpdate: boolean) => void): void;
