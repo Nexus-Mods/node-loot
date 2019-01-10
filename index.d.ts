@@ -27,21 +27,24 @@ export type LogCallback = (level: number, message: string) => void;
 export type ForkFunction = (module: string, args: string[]) => void;
 
 export class Loot extends NBindBase {
-	constructor(gameId: string, gamePath: string, gameLocalPath: string, language: string, logCallback: LogCallback, onFork: ForkFunction): Loot;
-
-	updateMasterlist(masterlistPath: string, repoUrl: string, repoBranch: string): boolean;
-	getMasterlistRevision(masterlistPath: string, getShortId: boolean): MasterlistInfo;
-	loadLists(masterlistPath: string, userlistPath: string): void;
-	getPluginMetadata(pluginName: string): PluginMetadata;
-	sortPlugins(pluginNames: string[]): string[];
-	setLoadOrder(pluginNames: string[]): void;
-	getLoadOrder(): string[];
-	loadCurrentLoadOrderState(): void;
-	isPluginActive(pluginName: string): boolean;
-	getGroups(includeUserGroups: boolean): Group[];
-	getUserGroups(): Group[];
-	setUserGroups(groups: Group[]);
-    getGeneralMessages(evaluateConditions: boolean): Message[];
+  constructor(gameId: string, gamePath: string, gameLocalPath: string, language: string, logCallback: LogCallback, onFork: ForkFunction): Loot;
+  
+  updateMasterlist(masterlistPath: string, repoUrl: string, repoBranch: string): boolean;
+  getMasterlistRevision(masterlistPath: string, getShortId: boolean): MasterlistInfo;
+  loadLists(masterlistPath: string, userlistPath: string): void;
+  loadPlugins(plugins: string[], loadHeadersOnly: boolean): void;
+  getPlugin(pluginName: string): PluginInterface;
+  getPluginMetadata(pluginName: string): PluginMetadata;
+  sortPlugins(pluginNames: string[]): string[];
+  setLoadOrder(pluginNames: string[]): void;
+  getLoadOrder(): string[];
+  loadCurrentLoadOrderState(): void;
+  isPluginActive(pluginName: string): boolean;
+  getGroups(includeUserGroups: boolean): Group[];
+  getUserGroups(): Group[];
+  setUserGroups(groups: Group[]);
+  getGroupsPath(fromGroupName: string, toGroupName: string): Vertex[];
+  getGeneralMessages(evaluateConditions: boolean): Message[];
 }
 
 export class LootAsync {
@@ -51,6 +54,8 @@ export class LootAsync {
   updateMasterlist(masterlistPath: string, repoUrl: string, repoBranch: string, callback: (err: Error, didUpdate: boolean) => void): void;
   getMasterlistRevision(masterlistPath: string, getShortId: boolean, callback: (err: Error, info: MasterlistInfo) => void): void;
   loadLists(masterlistPath: string, userlistPath: string, callback: (err: Error) => void): void;
+  loadPlugins(plugins: string[], loadHeadersOnly: boolean): void;
+  getPlugin(pluginName: string): PluginInterface;
   getPluginMetadata(pluginName: string, callback: (err: Error, meta: PluginMetadata) => void): void;
   sortPlugins(pluginNames: string[], callback: (err: Error, sorted: string[]) => void): void;
   setLoadOrder(pluginNames: string[]): void;
@@ -60,6 +65,7 @@ export class LootAsync {
   getGroups(includeUserGroups: boolean): Group[];
   getUserGroups(): Group[];
   setUserGroups(groups: Group[]);
+  getGroupsPath(fromGroupName: string, toGroupName: string): Vertex[];
   getGeneralMessages(evaluateConditions: boolean): Message[];
 };
 
@@ -157,6 +163,25 @@ export class Tag extends NBindBase {
 
 	/** std::string name; -- Read-only */
 	name: string;
+}
+
+export class Vertex extends NBindBase {
+	name: string;
+	typeOfEdgeToNextVertex: string;
+}
+
+export class PluginInterface extends NBindBase {
+	name: string;
+	version: string;
+	masters: string[];
+	bashTags: Tag[];
+ 
+	getCRC: number;
+	isMaster: boolean;
+	isLightMaster: boolean;
+	isValidAsLightMaster: boolean;
+	isEmpty: boolean;
+	loadsArchive: boolean;
 }
 
 /** bool IsCompatible(uint32_t, uint32_t, uint32_t); */
