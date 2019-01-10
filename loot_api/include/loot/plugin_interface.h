@@ -25,6 +25,7 @@
 #define LOOT_PLUGIN_INTERFACE
 
 #include <cstdint>
+#include <optional>
 #include <set>
 #include <string>
 #include <vector>
@@ -45,20 +46,23 @@ public:
   virtual std::string GetName() const = 0;
 
   /**
-   * Get the plugin's filename in lowercase characters.
-   * @return The lowercased plugin filename.
+   * Get the value of the version field in the HEDR subrecord of the plugin's
+   * TES4 record.
+   * @return The value of the version field, or NaN if the field could not be
+   *         found.
    */
-  virtual std::string GetLowercasedName() const = 0;
+  virtual float GetHeaderVersion() const = 0;
 
   /**
    * Get the plugin's version number from its description field.
    *
-   * If no version number is found in the description field, an empty string is
-   * returned. The description field parsing may fail to extract the version
-   * number correctly, though it functions correctly in all known cases.
-   * @return A string containing a version number, or an empty string.
+   * The description field may not contain a version number, or LOOT may be
+   * unable to detect it. The description field parsing may fail to extract the
+   * version number correctly, though it functions correctly in all known cases.
+   * @return An optional containing a version string if one is found, otherwise
+   *         an optional containing no value.
    */
-  virtual std::string GetVersion() const = 0;
+  virtual std::optional<std::string> GetVersion() const = 0;
 
   /**
    * Get the plugin's masters.
@@ -75,10 +79,10 @@ public:
 
   /**
    * Get the plugin's CRC-32 checksum.
-   * @return The plugin's CRC-32 checksum if it has been fully read. If only the
-   *         plugin's header has been read, ``0`` will be returned.
+   * @return An optional containing the plugin's CRC-32 checksum if the plugin
+   *         has been fully loaded, otherwise an optional containing no value.
    */
-  virtual uint32_t GetCRC() const = 0;
+  virtual std::optional<uint32_t> GetCRC() const = 0;
 
   /**
    * Check if the plugin's master flag is set.
@@ -91,6 +95,13 @@ public:
    * @return True if plugin is a light master, false otherwise.
    */
   virtual bool IsLightMaster() const = 0;
+
+  /**
+   * Check if the plugin is or would be valid as a light master.
+   * @return True if the plugin is a valid light master or would be a valid
+   *         light master, false otherwise.
+   */
+  virtual bool IsValidAsLightMaster() const = 0;
 
   /**
    * Check if the plugin contains any records other than its TES4 header.
@@ -112,23 +123,6 @@ public:
    *         FormID, false otherwise.
    */
   virtual bool DoFormIDsOverlap(const PluginInterface& plugin) const = 0;
-};
-}
-
-namespace std {
-/**
- * A specialisation of std::hash for loot::PluginInterface.
- */
-template<>
-struct hash<loot::PluginInterface> {
-  /**
-   * Calculate a hash value for an object of a class that implements
-   * loot::PluginInterface.
-   * @return The hash generated from the plugin's lowercased filename.
-   */
-  size_t operator()(const loot::PluginInterface& plugin) const {
-    return hash<string>()(plugin.GetLowercasedName());
-  }
 };
 }
 

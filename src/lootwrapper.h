@@ -61,6 +61,37 @@ public:
   }
 };
 
+class Vertex : public loot::Vertex {
+public:
+  Vertex(const loot::Vertex &reference) : loot::Vertex(reference) {}
+
+  void toJS(nbind::cbOutput output) const {
+
+    output(GetName(), Vertex::convertEdgeType(*GetTypeOfEdgeToNextVertex()));
+  }
+private:
+
+  static std::string convertEdgeType(loot::EdgeType edgeType) {
+    static std::map<loot::EdgeType, std::string> edgeMap {
+      { loot::EdgeType::group, "group" },
+      { loot::EdgeType::hardcoded, "hardcoded" },
+      { loot::EdgeType::master, "master" },
+      { loot::EdgeType::masterFlag, "masterFlag" },
+      { loot::EdgeType::masterlistLoadAfter, "masterlistLoadAfter" },
+      { loot::EdgeType::masterlistRequirement, "masterlistRequirement" },
+      { loot::EdgeType::userLoadAfter, "userlistLoadAfter" },
+      { loot::EdgeType::userRequirement, "userlistRequirement" },
+      { loot::EdgeType::overlap, "overlap" },
+      { loot::EdgeType::tieBreak, "tieBreak" }
+    };
+
+    auto iter = edgeMap.find(edgeType);
+    return (iter != edgeMap.end())
+      ? iter->second
+      : "";
+  }
+};
+
 class Tag : public loot::Tag {
 public:
   Tag(const loot::Tag &reference) : loot::Tag(reference) {}
@@ -106,8 +137,7 @@ public:
   }
 
   std::string GetName() const { return m_Reference->GetName(); }
-  std::string GetLowercasedName() const { return m_Reference->GetLowercasedName(); }
-  std::string GetVersion() const { return m_Reference->GetVersion(); }
+  std::optional<std::string> GetVersion() const { return m_Reference->GetVersion(); }
   std::vector<std::string> GetMasters() const { return m_Reference->GetMasters(); }
   std::vector<Tag> GetBashTags() const {
     const std::set<loot::Tag> tags = m_Reference->GetBashTags();
@@ -118,9 +148,10 @@ public:
     return result;
   }
 
-  uint32_t GetCRC() const { return m_Reference->GetCRC(); }
+  std::optional<uint32_t> GetCRC() const { return m_Reference->GetCRC(); }
   bool IsMaster() const { return m_Reference->IsMaster(); }
   bool IsLightMaster() const { return m_Reference->IsLightMaster(); }
+  bool IsValidAsLightMaster() const { return m_Reference->IsValidAsLightMaster(); }
   bool IsEmpty() const { return m_Reference->IsEmpty(); }
   bool LoadsArchive() const { return m_Reference->LoadsArchive(); }
   bool DoFormIDsOverlap(const PluginInterface &plugin) const { return m_Reference->DoFormIDsOverlap(*(plugin.m_Reference)); }
@@ -130,7 +161,7 @@ public:
       output(nullptr);
     }
     else {
-      output(GetName(), GetLowercasedName(), GetVersion(), GetMasters(), GetBashTags(), GetCRC(), IsMaster(), IsLightMaster(), IsEmpty(), LoadsArchive());
+      output(GetName(), *GetVersion(), GetMasters(), GetBashTags(), *GetCRC(), IsMaster(), IsLightMaster(), IsValidAsLightMaster(), IsEmpty(), LoadsArchive());
     }
   }
 
@@ -175,7 +206,7 @@ public:
     return m_Wrapped.IsEnabled();
   }
 
-  std::string GetGroup() const {
+  std::optional<std::string> GetGroup() const {
     return m_Wrapped.GetGroup();
   }
 
@@ -258,6 +289,8 @@ public:
 
   void setUserGroups(const std::vector<Group>& groups);
 
+  std::vector<Vertex> getGroupsPath(const std::string &fromGroupName, const std::string &toGroupName) const;
+
   std::vector<Message> getGeneralMessages(bool evaluateConditions = false) const;
 
 private:
@@ -305,9 +338,13 @@ NBIND_CLASS(File) {
   getter(GetDisplayName);
 }
 
+NBIND_CLASS(Vertex) {
+  getter(GetName);
+  getter(GetTypeOfEdgeToNextVertex);
+}
+
 NBIND_CLASS(PluginInterface) {
   getter(GetName);
-  getter(GetLowercasedName);
   getter(GetVersion);
   getter(GetMasters);
   getter(GetBashTags);
@@ -315,6 +352,7 @@ NBIND_CLASS(PluginInterface) {
   getter(GetCRC);
   getter(IsMaster);
   getter(IsLightMaster);
+  getter(IsValidAsLightMaster);
   getter(IsEmpty);
   getter(LoadsArchive);
   // method(DoFormIDsOverlap);
@@ -362,6 +400,7 @@ NBIND_CLASS(Loot) {
   method(loadCurrentLoadOrderState);
   method(isPluginActive);
   method(getGroups);
+  method(getGroupsPath);
   method(getUserGroups);
   method(setUserGroups);
   method(getGeneralMessages);

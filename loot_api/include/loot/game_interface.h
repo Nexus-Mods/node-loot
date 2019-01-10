@@ -24,6 +24,8 @@
 #ifndef LOOT_GAME_INTERFACE
 #define LOOT_GAME_INTERFACE
 
+#include <optional>
+
 #include "loot/database_interface.h"
 #include "loot/plugin_interface.h"
 
@@ -77,12 +79,10 @@ public:
 
   /**
    * @brief Get data for a loaded plugin.
-   * @details Throws an exception if the given plugin has not been loaded.
    * @param  pluginName
    *         The filename of the plugin to get data for.
-   * @returns A const PluginInterface reference. The reference remains valid
-   *          until the ``LoadPlugins()`` or ``SortPlugins()`` functions are
-   *          next called or this GameInterface is destroyed.
+   * @returns A shared pointer to a const PluginInterface implementation. The
+   *          pointer is null if the given plugin has not been loaded.
    */
   virtual std::shared_ptr<const PluginInterface> GetPlugin(
       const std::string& pluginName) const = 0;

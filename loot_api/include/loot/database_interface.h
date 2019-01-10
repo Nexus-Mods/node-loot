@@ -24,9 +24,12 @@
 #ifndef LOOT_DATABASE_INTERFACE
 #define LOOT_DATABASE_INTERFACE
 
+#include <filesystem>
+#include <optional>
 #include <string>
 #include <vector>
 
+#include "loot/exception/cyclic_interaction_error.h"
 #include "loot/metadata/group.h"
 #include "loot/metadata/message.h"
 #include "loot/metadata/plugin_metadata.h"
@@ -47,15 +50,15 @@ public:
    *  @details Can be called multiple times, each time replacing the
    *           previously-loaded data.
    *  @param masterlist_path
-   *         A string containing the relative or absolute path to the masterlist
-   *         file that should be loaded.
+   *         The relative or absolute path to the masterlist file that should be
+   *         loaded.
    *  @param userlist_path
-   *         A string containing the relative or absolute path to the userlist
-   *         file that should be loaded, or an empty string. If an empty string,
-   *         no userlist will be loaded.
+   *         The relative or absolute path to the userlist file that should be
+   *         loaded, or an empty path. If an empty path, no userlist will be
+   *         loaded.
    */
-  virtual void LoadLists(const std::string& masterlist_path,
-                         const std::string& userlist_path = "") = 0;
+  virtual void LoadLists(const std::filesystem::path& masterlist_path,
+                         const std::filesystem::path& userlist_path = "") = 0;
 
   /**
    * Writes a metadata file containing all loaded user-added metadata.
@@ -65,7 +68,7 @@ public:
    *         If `false` and `outputFile` already exists, no data will be
    *         written. Otherwise, data will be written.
    */
-  virtual void WriteUserMetadata(const std::string& outputFile,
+  virtual void WriteUserMetadata(const std::filesystem::path& outputFile,
                                  const bool overwrite) const = 0;
 
   /**
@@ -78,7 +81,7 @@ public:
    *         If `false` and `outputFile` already exists, no data will be
    *         written. Otherwise, data will be written.
    */
-  virtual void WriteMinimalList(const std::string& outputFile,
+  virtual void WriteMinimalList(const std::filesystem::path& outputFile,
                                 const bool overwrite) const = 0;
 
   /**
@@ -101,12 +104,12 @@ public:
    *           repository will be deleted and a new repository cloned from
    *           the given remote.
    *  @param masterlist_path
-   *         A string containing the relative or absolute path to the masterlist
-   *         file that should be updated. The filename must match the filename
-   *         of the masterlist file in the given remote repository, otherwise it
-   *         will not be updated correctly. Although LOOT itself expects this
-   *         filename to be "masterlist.yaml", the API does not check for any
-   *         specific filename.
+   *         The relative or absolute path to the masterlist file that should be
+   *         updated. The filename must match the filename of the masterlist
+   *         file in the given remote repository, otherwise it will not be
+   *         updated correctly. Although LOOT itself expects this filename to be
+   *         "masterlist.yaml", the API does not check for any specific
+   *         filename.
    *  @param remote_url
    *         The URL of the remote from which to fetch updates. This can also be
    *         a relative or absolute path to a local repository.
@@ -120,7 +123,7 @@ public:
    *           masterlist will have been re-loaded, but will need to be
    *           re-evaluated separately.
    */
-  virtual bool UpdateMasterlist(const std::string& masterlist_path,
+  virtual bool UpdateMasterlist(const std::filesystem::path& masterlist_path,
                                 const std::string& remote_url,
                                 const std::string& remote_branch) = 0;
 
@@ -129,8 +132,8 @@ public:
    *  @details Getting a masterlist's revision is only possible if it is found
    *           inside a local Git repository.
    *  @param masterlist_path
-   *         A string containing the relative or absolute path to the masterlist
-   *         file that should be queried.
+   *         The relative or absolute path to the masterlist file that should be
+   *         queried.
    *  @param get_short_id
    *         If `true`, the shortest unique hexadecimal revision hash that is at
    *         least 7 characters long will be outputted. Otherwise, the full 40
@@ -138,21 +141,21 @@ public:
    *  @returns The revision data.
    */
   virtual MasterlistInfo GetMasterlistRevision(
-      const std::string& masterlist_path,
+      const std::filesystem::path& masterlist_path,
       const bool get_short_id) const = 0;
 
   /**
    * Check if the given masterlist is the latest available for a given branch.
    * @param  masterlist_path
-   *         A string containing the relative or absolute path to the masterlist
-   *         file for which the latest revision should be obtained. It needs to
-   *         be in a local Git repository.
+   *         The relative or absolute path to the masterlist file for which the
+   *         latest revision should be obtained. It needs to be in a local Git
+   *         repository.
    * @param  branch
    *         The branch to check against.
    * @return True if the masterlist revision matches the latest masterlist
    *         revision for the given branch, and false otherwise.
    */
-  virtual bool IsLatestMasterlist(const std::string& masterlist_path,
+  virtual bool IsLatestMasterlist(const std::filesystem::path& masterlist_path,
                                   const std::string& branch) const = 0;
 
   /**
@@ -189,7 +192,8 @@ public:
    *        metadata from the masterlist.
    * @returns An unordered set of Group objects.
    */
-  virtual std::unordered_set<Group> GetGroups(bool includeUserMetadata = true) const = 0;
+  virtual std::unordered_set<Group> GetGroups(
+      bool includeUserMetadata = true) const = 0;
 
   /**
    * @brief Gets the groups that are defined or extended in the loaded userlist.
@@ -204,6 +208,25 @@ public:
    *        The unordered set of Group objects to set.
    */
   virtual void SetUserGroups(const std::unordered_set<Group>& groups) = 0;
+
+  /**
+   * @brief Get the "shortest" path between the two given groups according to
+   *        their load after metadata.
+   * @details The "shortest" path is defined as the path that maximises the
+   *          amount of user metadata involved while minimising the amount of
+   *          masterlist metadata involved. It's not the path involving the
+   *          fewest groups.
+   * @param fromGroupName
+   *        The name of the source group, that loads earlier.
+   * @param toGroupName
+   *        The name of the destination group, that loads later.
+   * @returns A vector of Vertex elements representing the path from the source
+   *          group to the destination group, or an empty vector if no path
+   *          exists.
+   */
+  virtual std::vector<Vertex> GetGroupsPath(
+      const std::string& fromGroupName,
+      const std::string& toGroupName) const = 0;
 
   /**
    * @brief Set the groups
@@ -226,11 +249,10 @@ public:
    *         If true, any metadata conditions are evaluated before the metadata
    *         is returned, otherwise unevaluated metadata is returned. Evaluating
    *         plugin metadata conditions does not clear the condition cache.
-   *  @returns A PluginMetadata object containing all the plugin's metadata.
-   *           If the plugin has no metadata, PluginMetadata.IsNameOnly()
-   *           will return true.
+   *  @returns If the plugin has metadata, an optional containing that metadata,
+   *           otherwise an optional containing no value.
    */
-  virtual PluginMetadata GetPluginMetadata(
+  virtual std::optional<PluginMetadata> GetPluginMetadata(
       const std::string& plugin,
       bool includeUserMetadata = true,
       bool evaluateConditions = false) const = 0;
@@ -243,11 +265,10 @@ public:
    *         If true, any metadata conditions are evaluated before the metadata
    *         is returned, otherwise unevaluated metadata is returned. Evaluating
    *         plugin metadata conditions does not clear the condition cache.
-   *  @returns A PluginMetadata object containing the plugin's user-added
-   *           metadata. If the plugin has no metadata,
-   *           PluginMetadata.IsNameOnly() will return true.
+   *  @returns If the plugin has user-added metadata, an optional containing
+   *           that metadata, otherwise an optional containing no value.
    */
-  virtual PluginMetadata GetPluginUserMetadata(
+  virtual std::optional<PluginMetadata> GetPluginUserMetadata(
       const std::string& plugin,
       bool evaluateConditions = false) const = 0;
 

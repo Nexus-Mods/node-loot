@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "algorithm": "cpp",
+        "locale": "cpp",
+        "regex": "cpp"
+    }
+}

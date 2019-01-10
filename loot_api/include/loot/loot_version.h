@@ -32,7 +32,7 @@ along with LOOT.  If not, see
 namespace loot {
 /**
  * @brief A purely static class that provides information about the version of
- *        the LOOT API that is being run.
+ *        libloot that is being run.
  */
 class LootVersion {
 public:
@@ -52,7 +52,7 @@ public:
    * @brief Get the API version as a string.
    * @return A string of the form "major.minor.patch".
    */
-  LOOT_API static std::string string();
+  LOOT_API static std::string GetVersionString();
 };
 }
 

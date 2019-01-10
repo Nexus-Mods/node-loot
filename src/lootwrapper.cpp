@@ -171,7 +171,7 @@ void Loot::loadPlugins(std::vector<std::string> plugins, bool loadHeadersOnly) {
 PluginMetadata Loot::getPluginMetadata(std::string plugin)
 {
   try {
-    return PluginMetadata(m_Game->GetDatabase()->GetPluginMetadata(plugin, true, true), m_Language);
+    return PluginMetadata(*m_Game->GetDatabase()->GetPluginMetadata(plugin, true, true), m_Language);
   }
   catch (const std::exception &e) {
     NBIND_ERR(e.what());
@@ -239,6 +239,10 @@ void Loot::setUserGroups(const std::vector<Group>& groups) {
     result.insert(ele);
   }
   m_Game->GetDatabase()->SetUserGroups(result);
+}
+
+std::vector<Vertex> Loot::getGroupsPath(const std::string &fromGroupName, const std::string &toGroupName) const {
+  return transform<Vertex>(m_Game->GetDatabase()->GetGroupsPath(fromGroupName, toGroupName));
 }
 
 std::vector<Message> Loot::getGeneralMessages(bool evaluateConditions) const {

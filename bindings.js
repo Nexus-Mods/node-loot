@@ -17,16 +17,16 @@ function attachBindings(binding) {
                });
 
   binding.bind('PluginInterface',
-               function(name, lowercasedName, version, masters, bashTags, crc,
-                        isMaster, isLightMaster, isEmpty, loadsArchive) {
+               function(name, version, masters, bashTags, crc,
+                        isMaster, isLightMaster, isValidAsLightMaster, isEmpty, loadsArchive) {
                  this.name = name;
-                 this.lowercasedName = lowercasedName;
                  this.version = version;
                  this.masters = masters;
                  this.bashTags = bashTags;
                  this.crc = crc;
                  this.isMaster = isMaster;
                  this.isLightMaster = isLightMaster;
+                 this.isValidAsLightMaster = isValidAsLightMaster;
                  this.isEmpty = isEmpty;
                  this.loadsArchive = loadsArchive;
                });
@@ -66,6 +66,11 @@ function attachBindings(binding) {
   binding.bind('Location', function(name, url) {
     this.name = name;
     this.url = url;
+  });
+
+  binding.bind('Vertex', function(name, edgeType) {
+    this.name = name;
+    this.edgeType = edgeType;
   });
 
   binding.bind('PluginCleaningData', function(cleaningUtility, crc, deletedNavmeshCount, deletedReferenceCount,
