@@ -24,25 +24,25 @@ export class Group extends NBindBase {
 }
 
 export class Loot extends NBindBase {
-  constructor(gameId: string, gamePath: string, gameLocalPath: string, language: string);
+	constructor(gameId: string, gamePath: string, gameLocalPath: string, language: string, logCallback: (level: number, message: string) => void, onFork: (module: string, args: string[]) => void);
 
-  updateMasterlist(masterlistPath: string, repoUrl: string, repoBranch: string): boolean;
-  getMasterlistRevision(masterlistPath: string, getShortId: boolean): MasterlistInfo;
-  loadLists(masterlistPath: string, userlistPath: string): void;
-  getPluginMetadata(pluginName: string): PluginMetadata;
-  sortPlugins(pluginNames: string[]): string[];
-  setLoadOrder(pluginNames: string[]): void;
-  getLoadOrder(): string[];
-  loadCurrentLoadOrderState(): void;
-  isPluginActive(pluginName: string): boolean;
-  getGroups(includeUserGroups: boolean): Group[];
-  getUserGroups(): Group[];
-  setUserGroups(groups: Group[]);
-  getGeneralMessages(evaluateConditions: boolean): Message[];
+	updateMasterlist(masterlistPath: string, repoUrl: string, repoBranch: string): boolean;
+	getMasterlistRevision(masterlistPath: string, getShortId: boolean): MasterlistInfo;
+	loadLists(masterlistPath: string, userlistPath: string): void;
+	getPluginMetadata(pluginName: string): PluginMetadata;
+	sortPlugins(pluginNames: string[]): string[];
+	setLoadOrder(pluginNames: string[]): void;
+	getLoadOrder(): string[];
+	loadCurrentLoadOrderState(): void;
+	isPluginActive(pluginName: string): boolean;
+	getGroups(includeUserGroups: boolean): Group[];
+	getUserGroups(): Group[];
+	setUserGroups(groups: Group[]);
+    getGeneralMessages(evaluateConditions: boolean): Message[];
 }
 
 export class LootAsync {
-  static create(gameId: string, gamePath: string, gameLocalPath: string, language: string): LootAsync;
+  static create(gameId: string, gamePath: string, gameLocalPath: string, language: string, logCallback: (level: number, message: string) => void, onFork: (module: string, args: string[]) => void): LootAsync;
   close(): void;
 
   updateMasterlist(masterlistPath: string, repoUrl: string, repoBranch: string, callback: (err: Error, didUpdate: boolean) => void): void;

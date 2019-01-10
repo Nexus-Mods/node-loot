@@ -1,5 +1,5 @@
-const { fork } = require('child_process');
 const nbind = require('nbind');
+const net = require('net');
 const path = require('path');
 
 const attachBindings = require('./bindings');
@@ -19,8 +19,8 @@ attachBindings(binding);
 const lib = binding.lib;
 
 class LootAsync {
-  static create(gameId, gamePath, gameLocalPath, language, logCallback, callback) {
-    const res = new LootAsync(gameId, gamePath, gameLocalPath, language, logCallback, (err) => {
+  static create(gameId, gamePath, gameLocalPath, language, logCallback, onFork, callback) {
+    const res = new LootAsync(gameId, gamePath, gameLocalPath, language, logCallback, onFork, (err) => {
       if (err !== null) {
         callback(err);
       } else {
@@ -29,7 +29,7 @@ class LootAsync {
     });
   }
 
-  constructor(gameId, gamePath, gameLocalPath, language, logCallback, callback) {
+  constructor(gameId, gamePath, gameLocalPath, language, logCallback, onFork, callback) {
     this.queue = [];
     this.logCallback = logCallback;
     this.didClose = false;
@@ -62,8 +62,27 @@ class LootAsync {
     this.makeProxy('setUserGroups');
     this.makeProxy('getGeneralMessages');
 
-    this.worker = fork(`${__dirname}${path.sep}async.js`);
-    this.worker.on('message', (...args) => this.handleResponse(...args));
+    const id = this.generateId();
+    this.ipc = new net.Server();
+    this.ipc.listen(`\\\\?\\pipe\\loot-ipc-${id}`, () => {
+      this.ipc.on('connection', socket => {
+        this.socket = socket;
+        socket.on('data', data => {
+          this.handleResponse(JSON.parse(data.toString()));
+        })
+      })
+
+      this.worker = onFork(`${__dirname}${path.sep}async.js`, [id]);
+    });
+  }
+
+  generateId() {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let res = [];
+    for (let i = 0; i < 8; ++i) {
+      res.push(chars[Math.floor(Math.random() * chars.length)]);
+    }
+    return res.join('');
   }
 
   close() {
@@ -104,7 +123,7 @@ class LootAsync {
   deliver(message, callback) {
     this.currentCallback = callback;
     try {
-      this.worker.send(message);
+      this.socket.write(JSON.stringify(message));
     } catch (err) {
       this.currentCallback(new Error('LOOT closed? Please check your log. Error was: ' + err.message));
       this.processQueue();
