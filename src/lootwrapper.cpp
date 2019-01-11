@@ -6,6 +6,7 @@
 #include <nan.h>
 #include <sstream>
 #include <memory>
+#include <iostream>
 
 struct UnsupportedGame : public std::runtime_error {
   UnsupportedGame() : std::runtime_error("game not supported") {}
@@ -14,6 +15,25 @@ struct UnsupportedGame : public std::runtime_error {
 struct BusyException : public std::runtime_error {
   BusyException() : std::runtime_error("Loot connection is busy") {}
 };
+
+v8::Local<v8::String> operator "" _n(const char *input, size_t) {
+  return Nan::New(input).ToLocalChecked();
+}
+
+inline v8::Local<v8::Value> InvalidParameter(
+  const char *func,
+  const char *arg,
+  const char *value) {
+
+  std::stringstream message;
+  message << "Invalid value passed to \"" << func << "\"";
+  v8::Local<v8::Object> res = Nan::Error(message.str().c_str()).As<v8::Object>();
+  res->Set("arg"_n, Nan::New(arg).ToLocalChecked());
+  res->Set("value"_n, Nan::New(value).ToLocalChecked());
+  res->Set("func"_n, Nan::New(func).ToLocalChecked());
+
+  return res;
+}
 
 template <typename T> v8::Local<v8::Value> ToV8(const T &value) {
   return Nan::New(value);
@@ -171,7 +191,13 @@ void Loot::loadPlugins(std::vector<std::string> plugins, bool loadHeadersOnly) {
 PluginMetadata Loot::getPluginMetadata(std::string plugin)
 {
   try {
-    return PluginMetadata(*m_Game->GetDatabase()->GetPluginMetadata(plugin, true, true), m_Language);
+    auto metaData = m_Game->GetDatabase()->GetPluginMetadata(plugin, true, true);
+    if (!metaData.has_value()) {
+      v8::Isolate* isolate = v8::Isolate::GetCurrent();
+      isolate->ThrowException(InvalidParameter("getPluginMetaData", "pluginName", plugin.c_str()));
+      return PluginMetadata(loot::PluginMetadata(), m_Language);
+    }
+    return PluginMetadata(*metaData, m_Language);
   }
   catch (const std::exception &e) {
     NBIND_ERR(e.what());
@@ -279,9 +305,10 @@ PluginMetadata::PluginMetadata(const loot::PluginMetadata &reference, const std:
 }
 
 void PluginMetadata::toJS(nbind::cbOutput output) const {
+  auto group = GetGroup();
   output(GetName(), GetMessages(), GetTags(), GetCleanInfo(), GetDirtyInfo(),
     GetIncompatibilities(), GetLoadAfterFiles(), GetLocations(), GetRequirements(),
-    IsEnabled(), GetGroup());
+    IsEnabled(), group.has_value() ? *group : std::string());
 }
 
 inline MasterlistInfo::MasterlistInfo(loot::MasterlistInfo info)
