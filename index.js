@@ -151,7 +151,7 @@ class LootAsync {
       if (!!this.currentCallback) {
         if (msg.error) {
           const err = new Error(msg.error);
-          Object.assign(err, msg.extraArgs);
+          Object.assign(err, JSON.parse(msg.extraArgs));
           this.currentCallback(err);
         } else {
           this.currentCallback(null, msg.result);
