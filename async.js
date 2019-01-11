@@ -34,7 +34,7 @@ const client = net.connect(`\\\\?\\pipe\\loot-ipc-${process.argv[2]}`, (arg) => 
       }
       send({ result });
     } catch (error) {
-      send({ error: error.message });
+      send({ error: error.message, extraArgs: JSON.stringify(error) });
     }
   }
 
