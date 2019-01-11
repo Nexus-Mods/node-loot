@@ -96,15 +96,6 @@ class LootAsync {
     return this.didClose;
   }
 
-  generateId() {
-    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    let res = '';
-    for (let i = 0; i < 8; ++i) {
-      res.push(chars[Math.floor(Math.random() * chars.length)]);
-    }
-    return res;
-  }
-
   makeProxy(name) {
     this[name] = (...args) => {
       let cb = args[args.length - 1];
