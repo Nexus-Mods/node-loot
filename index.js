@@ -18,6 +18,15 @@ attachBindings(binding);
 
 const lib = binding.lib;
 
+class AlreadyClosed extends Error {
+  constructor() {
+    super('Already closed');
+    Error.captureStackTrace(this, this.constructor);
+
+    this.name = this.constructor.name;
+  }
+}
+
 class LootAsync {
   static create(gameId, gamePath, gameLocalPath, language, logCallback, onFork, callback) {
     const res = new LootAsync(gameId, gamePath, gameLocalPath, language, logCallback, onFork, (err) => {
@@ -111,7 +120,7 @@ class LootAsync {
 
   enqueue(message, callback) {
     if (this.didClose) {
-      return callback(new Error('already closed'));
+      return callback(new AlreadyClosed());
     }
     if (this.currentCallback === null) {
       this.deliver(message, callback);
@@ -150,8 +159,14 @@ class LootAsync {
     try {
       if (!!this.currentCallback) {
         if (msg.error) {
-          const err = new Error(msg.error);
-          Object.assign(err, JSON.parse(msg.extraArgs));
+          const extraArgs = JSON.parse(msg.extraArgs);
+          let err;
+          if (extraArgs.name === 'AlreadyClosed') {
+            err = new AlreadyClosed();
+          } else {
+            err = new Error(msg.error);
+          }
+          Object.assign(err, extraArgs);
           this.currentCallback(err);
         } else {
           this.currentCallback(null, msg.result);
@@ -168,5 +183,6 @@ class LootAsync {
 }
 
 module.exports = Object.assign(lib, {
+  AlreadyClosed,
   LootAsync
 });

@@ -69,7 +69,6 @@ public:
 
     output(GetName(), Vertex::convertEdgeType(*GetTypeOfEdgeToNextVertex()));
   }
-private:
 
   static std::string convertEdgeType(loot::EdgeType edgeType) {
     static std::map<loot::EdgeType, std::string> edgeMap {
