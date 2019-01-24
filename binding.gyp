@@ -17,9 +17,20 @@
             'cflags_cc!': ['-fno-exceptions'],
             'msbuild_settings': {
                 "ClCompile": {
+                    "ExceptionHandling": 1,
                     'AdditionalOptions': ['-std:c++17']
                 }
-            }
+            },
+            "conditions": [
+              ["OS=='win'", {
+                "defines!": [
+                  "_HAS_EXCEPTIONS=0"
+                ],
+                "defines": [
+                  "_HAS_EXCEPTIONS=1"
+                ]
+              }]
+            ]
         }
     ],
     "includes": [

@@ -171,9 +171,6 @@ Loot::Loot(std::string gameId, std::string gamePath, std::string gameLocalPath, 
     */
     m_Game = loot::CreateGameHandle(convertGameId(gameId), gamePath, gameLocalPath);
   }
-  catch (const std::runtime_error &e) {
-    Nan::ThrowError(e.what());
-  }
   catch (const std::exception &e) {
     Nan::ThrowError(e.what());
   }
@@ -185,12 +182,7 @@ Loot::Loot(std::string gameId, std::string gamePath, std::string gameLocalPath, 
 bool Loot::updateMasterlist(std::string masterlistPath, std::string remoteUrl, std::string remoteBranch) {
   try {
     return m_Game->GetDatabase()->UpdateMasterlist(masterlistPath, remoteUrl, remoteBranch);
-  }
-  catch (const std::runtime_error &e) {
-    NBIND_ERR(e.what());
-    return false;
-  }
-  catch (const std::exception &e) {
+  } catch (const std::exception &e) {
     NBIND_ERR(e.what());
     return false;
   }
@@ -200,11 +192,7 @@ void Loot::loadLists(std::string masterlistPath, std::string userlistPath)
 {
   try {
     m_Game->GetDatabase()->LoadLists(masterlistPath, userlistPath);
-  }
-  catch (const std::runtime_error &e) {
-    NBIND_ERR(e.what());
-  }
-  catch (const std::exception &e) {
+  } catch (const std::exception &e) {
     NBIND_ERR(e.what());
   }
 }
@@ -212,11 +200,7 @@ void Loot::loadLists(std::string masterlistPath, std::string userlistPath)
 void Loot::loadPlugins(std::vector<std::string> plugins, bool loadHeadersOnly) {
   try {
     m_Game->LoadPlugins(plugins, loadHeadersOnly);
-  }
-  catch (const std::runtime_error &e) {
-    NBIND_ERR(e.what());
-  }
-  catch (const std::exception &e) {
+  } catch (const std::exception &e) {
     NBIND_ERR(e.what());
   }
 }
@@ -231,12 +215,7 @@ PluginMetadata Loot::getPluginMetadata(std::string plugin)
       return PluginMetadata(loot::PluginMetadata(), m_Language);
     }
     return PluginMetadata(*metaData, m_Language);
-  }
-  catch (const std::runtime_error &e) {
-    NBIND_ERR(e.what());
-    return PluginMetadata(loot::PluginMetadata(), m_Language);
-  }
-  catch (const std::exception &e) {
+  } catch (const std::exception &e) {
     NBIND_ERR(e.what());
     return PluginMetadata(loot::PluginMetadata(), m_Language);
   }
@@ -250,12 +229,7 @@ PluginInterface Loot::getPlugin(const std::string &pluginName)
       NBIND_ERR("Invalid plugin name");
     }
     return PluginInterface(plugin);
-  }
-  catch (const std::runtime_error &e) {
-    NBIND_ERR(e.what());
-    return PluginInterface(std::shared_ptr<loot::PluginInterface>());
-  }
-  catch (const std::exception &e) {
+  } catch (const std::exception &e) {
     NBIND_ERR(e.what());
     return PluginInterface(std::shared_ptr<loot::PluginInterface>());
   }
@@ -264,10 +238,6 @@ PluginInterface Loot::getPlugin(const std::string &pluginName)
 MasterlistInfo Loot::getMasterlistRevision(std::string masterlistPath, bool getShortId) const {
   try {
     return m_Game->GetDatabase()->GetMasterlistRevision(masterlistPath, getShortId);
-  }
-  catch (const std::runtime_error &e) {
-    NBIND_ERR(e.what());
-    return loot::MasterlistInfo();
   } catch (const std::exception &e) {
     NBIND_ERR(e.what());
     return loot::MasterlistInfo();
@@ -282,8 +252,6 @@ std::vector<std::string> Loot::sortPlugins(std::vector<std::string> input)
     return m_Game->SortPlugins(input);
   } catch (loot::CyclicInteractionError &e) {
     isolate->ThrowException(CyclicalInteractionException(e));
-  } catch (const std::runtime_error &e) {
-    NBIND_ERR(e.what());
   } catch (const std::exception &e) {
     NBIND_ERR(e.what());
   }
@@ -293,8 +261,6 @@ std::vector<std::string> Loot::sortPlugins(std::vector<std::string> input)
 void Loot::setLoadOrder(std::vector<std::string> input) {
   try {
     m_Game->SetLoadOrder(input);
-  } catch (const std::runtime_error &e) {
-    NBIND_ERR(e.what());
   } catch (const std::exception &e) {
     NBIND_ERR(e.what());
   }
@@ -303,8 +269,6 @@ void Loot::setLoadOrder(std::vector<std::string> input) {
 std::vector<std::string> Loot::getLoadOrder() const {
   try {
     return m_Game->GetLoadOrder();
-  } catch (const std::runtime_error &e) {
-    NBIND_ERR(e.what());
   } catch (const std::exception &e) {
     NBIND_ERR(e.what());
   }
@@ -314,8 +278,6 @@ std::vector<std::string> Loot::getLoadOrder() const {
 void Loot::loadCurrentLoadOrderState() {
   try {
     return m_Game->LoadCurrentLoadOrderState();
-  } catch (const std::runtime_error &e) {
-    NBIND_ERR(e.what());
   } catch (const std::exception &e) {
     NBIND_ERR(e.what());
   }
@@ -324,8 +286,6 @@ void Loot::loadCurrentLoadOrderState() {
 bool Loot::isPluginActive(const std::string &pluginName) const {
   try {
     return m_Game->IsPluginActive(pluginName);
-  } catch (const std::runtime_error &e) {
-    NBIND_ERR(e.what());
   } catch (const std::exception &e) {
     NBIND_ERR(e.what());
   }
@@ -336,8 +296,6 @@ std::vector<Group> Loot::getGroups(bool includeUserMetadata) const
 {
   try {
     return transform<Group>(m_Game->GetDatabase()->GetGroups(includeUserMetadata));
-  } catch (const std::runtime_error &e) {
-    NBIND_ERR(e.what());
   } catch (const std::exception &e) {
     NBIND_ERR(e.what());
   }
@@ -347,8 +305,6 @@ std::vector<Group> Loot::getGroups(bool includeUserMetadata) const
 std::vector<Group> Loot::getUserGroups() const {
   try {
     return transform<Group>(m_Game->GetDatabase()->GetUserGroups());
-  } catch (const std::runtime_error &e) {
-    NBIND_ERR(e.what());
   } catch (const std::exception &e) {
     NBIND_ERR(e.what());
   }
@@ -362,8 +318,6 @@ void Loot::setUserGroups(const std::vector<Group>& groups) {
       result.insert(ele);
     }
     m_Game->GetDatabase()->SetUserGroups(result);
-  } catch (const std::runtime_error &e) {
-    NBIND_ERR(e.what());
   } catch (const std::exception &e) {
     NBIND_ERR(e.what());
   }
@@ -372,8 +326,6 @@ void Loot::setUserGroups(const std::vector<Group>& groups) {
 std::vector<Vertex> Loot::getGroupsPath(const std::string &fromGroupName, const std::string &toGroupName) const {
   try {
     return transform<Vertex>(m_Game->GetDatabase()->GetGroupsPath(fromGroupName, toGroupName));
-  } catch (const std::runtime_error &e) {
-    NBIND_ERR(e.what());
   } catch (const std::exception &e) {
     NBIND_ERR(e.what());
   }
@@ -388,8 +340,6 @@ std::vector<Message> Loot::getGeneralMessages(bool evaluateConditions) const {
       result.push_back(Message(msg, m_Language));
     }
     return result;
-  } catch (const std::runtime_error &e) {
-    NBIND_ERR(e.what());
   } catch (const std::exception &e) {
     NBIND_ERR(e.what());
   }
