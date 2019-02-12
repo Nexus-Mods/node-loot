@@ -7,6 +7,7 @@
 #include <sstream>
 #include <memory>
 #include <iostream>
+#include "string_cast.h"
 
 struct UnsupportedGame : public std::runtime_error {
   UnsupportedGame() : std::runtime_error("game not supported") {}
@@ -156,6 +157,10 @@ private:
   std::function<void()> m_IntCallback;
 };
 
+std::wstring u8Tou16(const std::string &input) {
+  return toWC(input.c_str(), CodePage::UTF8, input.length());
+}
+
 Loot::Loot(std::string gameId, std::string gamePath, std::string gameLocalPath, std::string language,
            LogFunc logCallback)
   : m_Language(language)
@@ -169,7 +174,7 @@ Loot::Loot(std::string gameId, std::string gamePath, std::string gameLocalPath, 
       this->m_LogCallback(static_cast<int>(level), message);
     });
     */
-    m_Game = loot::CreateGameHandle(convertGameId(gameId), gamePath, gameLocalPath);
+    m_Game = loot::CreateGameHandle(convertGameId(gameId), u8Tou16(gamePath), u8Tou16(gameLocalPath));
   }
   catch (const std::exception &e) {
     Nan::ThrowError(e.what());
@@ -181,7 +186,7 @@ Loot::Loot(std::string gameId, std::string gamePath, std::string gameLocalPath, 
 
 bool Loot::updateMasterlist(std::string masterlistPath, std::string remoteUrl, std::string remoteBranch) {
   try {
-    return m_Game->GetDatabase()->UpdateMasterlist(masterlistPath, remoteUrl, remoteBranch);
+    return m_Game->GetDatabase()->UpdateMasterlist(u8Tou16(masterlistPath), remoteUrl, remoteBranch);
   } catch (const std::exception &e) {
     NBIND_ERR(e.what());
     return false;
@@ -191,7 +196,7 @@ bool Loot::updateMasterlist(std::string masterlistPath, std::string remoteUrl, s
 void Loot::loadLists(std::string masterlistPath, std::string userlistPath)
 {
   try {
-    m_Game->GetDatabase()->LoadLists(masterlistPath, userlistPath);
+    m_Game->GetDatabase()->LoadLists(u8Tou16(masterlistPath), u8Tou16(userlistPath));
   } catch (const std::exception &e) {
     NBIND_ERR(e.what());
   }
@@ -237,7 +242,7 @@ PluginInterface Loot::getPlugin(const std::string &pluginName)
 
 MasterlistInfo Loot::getMasterlistRevision(std::string masterlistPath, bool getShortId) const {
   try {
-    return m_Game->GetDatabase()->GetMasterlistRevision(masterlistPath, getShortId);
+    return m_Game->GetDatabase()->GetMasterlistRevision(u8Tou16(masterlistPath), getShortId);
   } catch (const std::exception &e) {
     NBIND_ERR(e.what());
     return loot::MasterlistInfo();
