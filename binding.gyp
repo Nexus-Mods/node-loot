@@ -27,7 +27,8 @@
                   "_HAS_EXCEPTIONS=0"
                 ],
                 "defines": [
-                  "_HAS_EXCEPTIONS=1"
+                  "_HAS_EXCEPTIONS=1",
+                  "WINVER=0x600"
                 ]
               }]
             ]
