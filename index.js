@@ -29,19 +29,32 @@ class AlreadyClosed extends Error {
 
 class LootAsync {
   static create(gameId, gamePath, gameLocalPath, language, logCallback, onFork, callback) {
-    const res = new LootAsync(gameId, gamePath, gameLocalPath, language, logCallback, onFork, (err) => {
-      if (err !== null) {
-        callback(err);
-      } else {
-        callback(null, res);
-      }
-    });
+    try {
+      const res = new LootAsync(gameId, gamePath, gameLocalPath, language, logCallback, onFork, (err) => {
+        if (err !== null) {
+          callback(err);
+        } else {
+          callback(null, res);
+        }
+      });
+    } catch (err) {
+      callback(err);
+    }
   }
 
   constructor(gameId, gamePath, gameLocalPath, language, logCallback, onFork, callback) {
     this.queue = [];
     this.logCallback = logCallback;
     this.didClose = false;
+
+    let initCallback = (err) => {
+      // ensure the init callback isn't called twice.
+      initCallback = (err) => {
+        logCallback(4, err.message);
+      }
+      callback(err);
+
+    }
 
     this.currentCallback = () => {
       this.enqueue({
@@ -52,7 +65,7 @@ class LootAsync {
           gameLocalPath,
           language,
         ]
-      }, callback);
+      }, initCallback);
     }
 
     this.makeProxy('updateMasterlist');
@@ -74,16 +87,25 @@ class LootAsync {
 
     const id = this.generateId();
     this.ipc = new net.Server();
-    this.ipc.listen(`\\\\?\\pipe\\loot-ipc-${id}`, () => {
-      this.ipc.on('connection', socket => {
-        this.socket = socket;
-        socket.on('data', data => {
-          this.handleResponse(JSON.parse(data.toString()));
+    try {
+      // this seems to fail for some users with EINVAL. why?
+      // May be a wine-only problem but that's not confirmed
+      this.ipc.listen(`\\\\?\\pipe\\loot-ipc-${id}`, () => {
+        this.ipc.on('connection', socket => {
+          this.socket = socket;
+          socket.on('data', data => {
+            this.handleResponse(JSON.parse(data.toString()));
+          })
         })
-      })
 
-      this.worker = onFork(`${__dirname}${path.sep}async.js`, [id]);
-    });
+        this.worker = onFork(`${__dirname}${path.sep}async.js`, [id]);
+      })
+      .on('error', (err) => {
+        initCallback(err);
+      });
+    } catch (err) {
+      initCallback(new Error('failed to establish pipe'));
+    }
   }
 
   generateId() {
