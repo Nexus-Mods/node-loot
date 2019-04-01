@@ -8,6 +8,9 @@
 #include <memory>
 #include <iostream>
 #include <clocale>
+#ifdef WIN32
+#include <windows.h>
+#endif
 #include "string_cast.h"
 
 struct UnsupportedGame : public std::runtime_error {
