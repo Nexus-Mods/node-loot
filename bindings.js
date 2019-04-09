@@ -70,7 +70,7 @@ function attachBindings(binding) {
 
   binding.bind('Vertex', function(name, edgeType) {
     this.name = name;
-    this.edgeType = edgeType;
+    this.typeOfEdgeToNextVertex = edgeType;
   });
 
   binding.bind('PluginCleaningData', function(cleaningUtility, crc, deletedNavmeshCount, deletedReferenceCount,
