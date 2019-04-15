@@ -29,7 +29,10 @@
                 "defines": [
                   "_HAS_EXCEPTIONS=1",
                   "WINVER=0x600"
-                ]
+                ],
+                "libraries": [
+                  "-DelayLoad:node.exe",
+                ],
               }]
             ]
         }
