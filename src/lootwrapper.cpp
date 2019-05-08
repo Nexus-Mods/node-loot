@@ -235,8 +235,8 @@ PluginMetadata Loot::getPluginMetadata(std::string plugin)
   try {
     auto metaData = m_Game->GetDatabase()->GetPluginMetadata(plugin, true, true);
     if (!metaData.has_value()) {
-      v8::Isolate* isolate = v8::Isolate::GetCurrent();
-      isolate->ThrowException(InvalidParameter("getPluginMetaData", "pluginName", plugin.c_str()));
+      // previously throw an exception here but this is *not* an error, it happens for all plugins
+      // that have no data
       return PluginMetadata(loot::PluginMetadata(), m_Language);
     }
     return PluginMetadata(*metaData, m_Language);
