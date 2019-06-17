@@ -101,7 +101,7 @@ class LootAsync {
           })
         })
 
-        this.connect(initCallback);
+        this.restart(initCallback);
       })
       .on('error', (err) => {
         initCallback(err);
