@@ -27,6 +27,15 @@ class AlreadyClosed extends Error {
   }
 }
 
+class RemoteDied extends Error {
+  constructor() {
+    super('LOOT process died');
+    Error.captureStackTrace(this, this.constructor);
+
+    this.name = this.constructor.name;
+  }
+}
+
 class LootAsync {
   static create(gameId, gamePath, gameLocalPath, language, logCallback, onFork, callback) {
     try {
@@ -46,6 +55,13 @@ class LootAsync {
     this.queue = [];
     this.logCallback = logCallback;
     this.didClose = false;
+    this.onFork = onFork;
+    this.initArgs = [
+      gameId,
+      gamePath,
+      gameLocalPath,
+      language,
+    ];
 
     let initCallback = (err) => {
       // ensure the init callback isn't called twice.
@@ -53,19 +69,6 @@ class LootAsync {
         logCallback(4, err.message);
       }
       callback(err);
-
-    }
-
-    this.currentCallback = () => {
-      this.enqueue({
-        type: 'init',
-        args: [
-          gameId,
-          gamePath,
-          gameLocalPath,
-          language,
-        ]
-      }, initCallback);
     }
 
     this.makeProxy('updateMasterlist');
@@ -85,12 +88,12 @@ class LootAsync {
     this.makeProxy('setUserGroups');
     this.makeProxy('getGeneralMessages');
 
-    const id = this.generateId();
+    this.id = this.generateId();
     this.ipc = new net.Server();
     try {
       // this seems to fail for some users with EINVAL. why?
       // May be a wine-only problem but that's not confirmed
-      this.ipc.listen(`\\\\?\\pipe\\loot-ipc-${id}`, () => {
+      this.ipc.listen(`\\\\?\\pipe\\loot-ipc-${this.id}`, () => {
         this.ipc.on('connection', socket => {
           this.socket = socket;
           socket.on('data', data => {
@@ -98,13 +101,23 @@ class LootAsync {
           })
         })
 
-        this.worker = onFork(`${__dirname}${path.sep}async.js`, [id]);
+        this.connect(initCallback);
       })
       .on('error', (err) => {
         initCallback(err);
       });
     } catch (err) {
       initCallback(new Error('failed to establish pipe'));
+    }
+  }
+
+  restart(callback) {
+    this.worker = this.onFork(`${__dirname}${path.sep}async.js`, [this.id]);
+    this.currentCallback = () => {
+      this.enqueue({
+        type: 'init',
+        args: this.initArgs,
+      }, callback);
     }
   }
 
@@ -133,10 +146,13 @@ class LootAsync {
       let cb = args[args.length - 1];
       if (typeof(cb) !== 'function') {
         cb = undefined;
+      } else {
+        args = args.slice(0, args.length - 1);
       }
+
       this.enqueue({
         type: name,
-        args: args.slice(0, args.length - 1),
+        args,
       }, cb);
     };
   }
@@ -154,12 +170,18 @@ class LootAsync {
 
   deliver(message, callback) {
     this.currentCallback = callback;
-    try {
-      this.socket.write(JSON.stringify(message));
-    } catch (err) {
-      this.currentCallback(new Error('LOOT closed? Please check your log. Error was: ' + err.message));
-      this.processQueue();
-    }
+    this.socket.write(JSON.stringify(message), err => {
+      if (!!err) {
+        if (this.currentCallback !== undefined) {
+          if (err.code === 'EPIPE') {
+            this.currentCallback(new RemoteDied());
+          } else {
+            this.currentCallback(err);
+          }
+        }
+        this.processQueue();
+      }
+    });
   }
 
   processQueue() {

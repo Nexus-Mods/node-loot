@@ -48,7 +48,8 @@ export class Loot extends NBindBase {
 }
 
 export class LootAsync {
-  static create(gameId: string, gamePath: string, gameLocalPath: string, language: string, logCallback: LogCallback, onFork: ForkFunction): LootAsync;
+	static create(gameId: string, gamePath: string, gameLocalPath: string, language: string, logCallback: LogCallback, onFork: ForkFunction, callback: (err: Error, loot: LootAsync) => void);
+	restart(callback: (err: Error) => void);
   close(): void;
 
   updateMasterlist(masterlistPath: string, repoUrl: string, repoBranch: string, callback: (err: Error, didUpdate: boolean) => void): void;
