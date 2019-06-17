@@ -170,7 +170,7 @@ class LootAsync {
 
   deliver(message, callback) {
     this.currentCallback = callback;
-    this.socket.write(JSON.stringify(message), err => {
+    const handleError = err => {
       if (!!err) {
         if (this.currentCallback !== undefined) {
           if (err.code === 'EPIPE') {
@@ -181,7 +181,12 @@ class LootAsync {
         }
         this.processQueue();
       }
-    });
+    };
+    try {
+      this.socket.write(JSON.stringify(message), handleError);
+    } catch (err) {
+      handleError(err);
+    }
   }
 
   processQueue() {
