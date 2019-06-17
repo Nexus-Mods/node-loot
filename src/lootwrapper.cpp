@@ -222,7 +222,6 @@ void Loot::loadPlugins(std::vector<std::string> plugins, bool loadHeadersOnly) {
   try {
     m_Game->LoadPlugins(plugins, loadHeadersOnly);
   } catch (const std::exception &e) {
-    std::cout << "load plugins failed " << e.what() << std::endl;
     v8::Isolate* isolate = v8::Isolate::GetCurrent();
     isolate->ThrowException(LOOTError("loadPlugins", e.what()));
   }
