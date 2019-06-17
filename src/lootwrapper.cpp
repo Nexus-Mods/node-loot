@@ -50,9 +50,8 @@ inline v8::Local<v8::Value> InvalidParameter(
   const char *arg,
   const char *value) {
 
-  std::stringstream message;
-  message << "Invalid value passed to \"" << func << "\"";
-  v8::Local<v8::Object> res = Nan::Error(message.str().c_str()).As<v8::Object>();
+  std::string message = std::string("Invalid value passed to \"") + func + "\"";
+  v8::Local<v8::Object> res = Nan::Error(message.c_str()).As<v8::Object>();
   res->Set("arg"_n, Nan::New(arg).ToLocalChecked());
   res->Set("value"_n, Nan::New(value).ToLocalChecked());
   res->Set("func"_n, Nan::New(func).ToLocalChecked());
@@ -64,9 +63,8 @@ inline v8::Local<v8::Value> LOOTError(
   const char *func,
   const char *what) {
 
-  std::stringstream message;
-  message << "LOOT operation \"" << func << "\" failed: " << what;
-  v8::Local<v8::Object> res = Nan::Error(message.str().c_str()).As<v8::Object>();
+  std::string message = std::string("LOOT operation \"") + func + "\" failed: " + what;
+  v8::Local<v8::Object> res = Nan::Error(message.c_str()).As<v8::Object>();
   res->Set("func"_n, Nan::New(func).ToLocalChecked());
 
   return res;
