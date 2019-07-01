@@ -161,7 +161,7 @@ class LootAsync {
     if (this.didClose) {
       return callback(new AlreadyClosed());
     }
-    if (this.currentCallback === null) {
+    if (!this.currentCallback) {
       this.deliver(message, callback);
     } else {
       this.queue.push({ message, callback });
@@ -172,7 +172,7 @@ class LootAsync {
     this.currentCallback = callback;
     const handleError = err => {
       if (!!err) {
-        if (this.currentCallback !== undefined) {
+        if (!!this.currentCallback) {
           if (err.code === 'EPIPE') {
             this.currentCallback(new RemoteDied());
           } else {
