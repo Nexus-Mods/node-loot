@@ -5,7 +5,12 @@
                 "auto.gypi"
             ],
             "sources": [
-                "src/lootwrapper.cpp"
+                "src/lootwrapper.cpp",
+                "src/lootwrapper.h",
+                "src/exceptions.cpp",
+                "src/exceptions.h",
+                "src/string_cast.cpp",
+                "src/string_cast.h"
             ],
             "include_dirs": [
                 "./loot_api/include"

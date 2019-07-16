@@ -9,7 +9,9 @@
 #include <iostream>
 #include <clocale>
 #ifdef WIN32
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include "exceptions.h"
 #endif
 #include "string_cast.h"
 
@@ -20,11 +22,6 @@ struct UnsupportedGame : public std::runtime_error {
 struct BusyException : public std::runtime_error {
   BusyException() : std::runtime_error("Loot connection is busy") {}
 };
-
-
-v8::Local<v8::String> operator "" _n(const char *input, size_t) {
-  return Nan::New(input).ToLocalChecked();
-}
 
 inline v8::Local<v8::Value> CyclicalInteractionException(loot::CyclicInteractionError &err) {
   v8::Local<v8::Object> exception = Nan::Error(Nan::New<v8::String>(err.what()).ToLocalChecked()).As<v8::Object>();
@@ -180,6 +177,8 @@ Loot::Loot(std::string gameId, std::string gamePath, std::string gameLocalPath, 
   : m_Language(language)
   , m_LogCallback(logCallback)
 {
+  v8::Isolate* isolate = v8::Isolate::GetCurrent();
+
   try {
     loot::InitialiseLocale(language);
     /*
@@ -189,8 +188,13 @@ Loot::Loot(std::string gameId, std::string gamePath, std::string gameLocalPath, 
     });
     */
     m_Game = loot::CreateGameHandle(convertGameId(gameId), u8Tou16(gamePath), u8Tou16(gameLocalPath));
-  }
-  catch (const std::exception &e) {
+  } catch (const std::filesystem::filesystem_error &e) {
+#ifdef WIN32
+    isolate->ThrowException(WinApiException(e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str()));
+#else
+    isolate->ThrowException(Nan::ErrnoException(e.code().value(), __FUNCTION__, nullptr, e.path1().generic_u8string().c_str()));
+#endif
+  } catch (const std::exception &e) {
     Nan::ThrowError(e.what());
   }
   catch (...) {
@@ -199,19 +203,35 @@ Loot::Loot(std::string gameId, std::string gamePath, std::string gameLocalPath, 
 }
 
 bool Loot::updateMasterlist(std::string masterlistPath, std::string remoteUrl, std::string remoteBranch) {
+  v8::Isolate* isolate = v8::Isolate::GetCurrent();
+
   try {
     return m_Game->GetDatabase()->UpdateMasterlist(u8Tou16(masterlistPath), remoteUrl, remoteBranch);
+  } catch (const std::filesystem::filesystem_error &e) {
+#ifdef WIN32
+    isolate->ThrowException(WinApiException(e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str()));
+#else
+    isolate->ThrowException(Nan::ErrnoException(e.code().value(), __FUNCTION__, nullptr, e.path1().generic_u8string().c_str()));
+#endif
   } catch (const std::exception &e) {
     v8::Isolate* isolate = v8::Isolate::GetCurrent();
     isolate->ThrowException(LOOTError("updateMasterlist", e.what()));
-    return false;
   }
+  return false;
 }
 
 void Loot::loadLists(std::string masterlistPath, std::string userlistPath)
 {
+  v8::Isolate* isolate = v8::Isolate::GetCurrent();
+
   try {
     m_Game->GetDatabase()->LoadLists(u8Tou16(masterlistPath), u8Tou16(userlistPath));
+  } catch (const std::filesystem::filesystem_error &e) {
+#ifdef WIN32
+    isolate->ThrowException(WinApiException(e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str()));
+#else
+    isolate->ThrowException(Nan::ErrnoException(e.code().value(), __FUNCTION__, nullptr, e.path1().generic_u8string().c_str()));
+#endif
   } catch (const std::exception &e) {
     v8::Isolate* isolate = v8::Isolate::GetCurrent();
     isolate->ThrowException(LOOTError("loadLists", e.what()));
@@ -219,8 +239,16 @@ void Loot::loadLists(std::string masterlistPath, std::string userlistPath)
 }
 
 void Loot::loadPlugins(std::vector<std::string> plugins, bool loadHeadersOnly) {
+  v8::Isolate* isolate = v8::Isolate::GetCurrent();
+
   try {
     m_Game->LoadPlugins(plugins, loadHeadersOnly);
+  } catch (const std::filesystem::filesystem_error &e) {
+#ifdef WIN32
+    isolate->ThrowException(WinApiException(e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str()));
+#else
+    isolate->ThrowException(Nan::ErrnoException(e.code().value(), __FUNCTION__, nullptr, e.path1().generic_u8string().c_str()));
+#endif
   } catch (const std::exception &e) {
     v8::Isolate* isolate = v8::Isolate::GetCurrent();
     isolate->ThrowException(LOOTError("loadPlugins", e.what()));
@@ -229,6 +257,8 @@ void Loot::loadPlugins(std::vector<std::string> plugins, bool loadHeadersOnly) {
 
 PluginMetadata Loot::getPluginMetadata(std::string plugin)
 {
+  v8::Isolate* isolate = v8::Isolate::GetCurrent();
+
   try {
     auto metaData = m_Game->GetDatabase()->GetPluginMetadata(plugin, true, true);
     if (!metaData.has_value()) {
@@ -237,36 +267,58 @@ PluginMetadata Loot::getPluginMetadata(std::string plugin)
       return PluginMetadata(loot::PluginMetadata(), m_Language);
     }
     return PluginMetadata(*metaData, m_Language);
+  } catch (const std::filesystem::filesystem_error &e) {
+#ifdef WIN32
+    isolate->ThrowException(WinApiException(e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str()));
+#else
+    isolate->ThrowException(Nan::ErrnoException(e.code().value(), __FUNCTION__, nullptr, e.path1().generic_u8string().c_str()));
+#endif
   } catch (const std::exception &e) {
     v8::Isolate* isolate = v8::Isolate::GetCurrent();
     isolate->ThrowException(LOOTError("getPluginMetadata", e.what()));
-    return PluginMetadata(loot::PluginMetadata(), m_Language);
   }
+  return PluginMetadata(loot::PluginMetadata(), m_Language);
 }
 
 PluginInterface Loot::getPlugin(const std::string &pluginName)
 {
+  v8::Isolate* isolate = v8::Isolate::GetCurrent();
+
   try {
     auto plugin = m_Game->GetPlugin(pluginName);
     if (plugin.get() == nullptr) {
       NBIND_ERR("Invalid plugin name");
     }
     return PluginInterface(plugin);
+  } catch (const std::filesystem::filesystem_error &e) {
+#ifdef WIN32
+    isolate->ThrowException(WinApiException(e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str()));
+#else
+    isolate->ThrowException(Nan::ErrnoException(e.code().value(), __FUNCTION__, nullptr, e.path1().generic_u8string().c_str()));
+#endif
   } catch (const std::exception &e) {
     v8::Isolate* isolate = v8::Isolate::GetCurrent();
     isolate->ThrowException(LOOTError("getPlugin", e.what()));
-    return PluginInterface(std::shared_ptr<loot::PluginInterface>());
   }
+  return PluginInterface(std::shared_ptr<loot::PluginInterface>());
 }
 
 MasterlistInfo Loot::getMasterlistRevision(std::string masterlistPath, bool getShortId) const {
+  v8::Isolate* isolate = v8::Isolate::GetCurrent();
+
   try {
     return m_Game->GetDatabase()->GetMasterlistRevision(u8Tou16(masterlistPath), getShortId);
+  } catch (const std::filesystem::filesystem_error &e) {
+#ifdef WIN32
+    isolate->ThrowException(WinApiException(e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str()));
+#else
+    isolate->ThrowException(Nan::ErrnoException(e.code().value(), __FUNCTION__, nullptr, e.path1().generic_u8string().c_str()));
+#endif
   } catch (const std::exception &e) {
     v8::Isolate* isolate = v8::Isolate::GetCurrent();
     isolate->ThrowException(LOOTError("getMasterlistRevision", e.what()));
-    return loot::MasterlistInfo();
   }
+  return loot::MasterlistInfo();
 }
 
 std::vector<std::string> Loot::sortPlugins(std::vector<std::string> input)
@@ -274,9 +326,16 @@ std::vector<std::string> Loot::sortPlugins(std::vector<std::string> input)
   v8::Isolate* isolate = v8::Isolate::GetCurrent();
 
   try {
+    std::cout << "sort plugins" << std::endl;
     return m_Game->SortPlugins(input);
   } catch (loot::CyclicInteractionError &e) {
     isolate->ThrowException(CyclicalInteractionException(e));
+  } catch (const std::filesystem::filesystem_error &e) {
+#ifdef WIN32
+    isolate->ThrowException(WinApiException(e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str()));
+#else
+    isolate->ThrowException(Nan::ErrnoException(e.code().value(), __FUNCTION__, nullptr, e.path1().generic_u8string().c_str()));
+#endif
   } catch (const std::exception &e) {
     v8::Isolate* isolate = v8::Isolate::GetCurrent();
     isolate->ThrowException(LOOTError("sortPlugins", e.what()));
