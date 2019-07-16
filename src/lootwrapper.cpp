@@ -442,6 +442,7 @@ std::vector<Message> Loot::getGeneralMessages(bool evaluateConditions) const {
 
 loot::GameType Loot::convertGameId(const std::string &gameId) const {
   std::map<std::string, loot::GameType> gameMap{
+    { "morrowind", loot::GameType::tes3 },
     { "oblivion", loot::GameType::tes4 },
     { "skyrim", loot::GameType::tes5 },
     { "skyrimse", loot::GameType::tes5se },
