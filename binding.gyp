@@ -23,7 +23,7 @@
             'msbuild_settings': {
                 "ClCompile": {
                     "ExceptionHandling": 1,
-                    'AdditionalOptions': ['-std:c++17']
+                    'AdditionalOptions': ['-std:c++17', '/Ob2', '/Oi', '/Ot', '/Oy', '/GL', '/GF', '/Gy', '/MT']
                 }
             },
             "conditions": [
@@ -38,6 +38,18 @@
                 "libraries": [
                   "-DelayLoad:node.exe",
                 ],
+                'msvs_settings': {
+                  'VCCLCompilerTool': {
+                    'ExceptionHandling': 1,
+                    'RuntimeLibrary': 0
+                  },
+                  "VCLibrarianTool": {
+                    'AdditionalOptions': [ '/LTCG' ]
+                  },
+                  'VCLinkerTool': {
+                    'LinkTimeCodeGeneration': 1
+                  }
+                }
               }]
             ]
         }
