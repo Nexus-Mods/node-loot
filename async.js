@@ -2,6 +2,11 @@ const nbind = require('nbind');
 const net = require('net');
 const attachBindings = require('./bindings');
 
+process.on('uncaughtException', error => {
+  console.error(error.message);
+  process.exit(1);
+});
+
 let binding;
 try {
   binding = nbind.init(`${__dirname}/loot`);
