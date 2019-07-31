@@ -27,32 +27,48 @@ class AlreadyClosed extends Error {
   }
 }
 
+class RemoteDied extends Error {
+  constructor() {
+    super('LOOT process died');
+    Error.captureStackTrace(this, this.constructor);
+
+    this.name = this.constructor.name;
+  }
+}
+
 class LootAsync {
   static create(gameId, gamePath, gameLocalPath, language, logCallback, onFork, callback) {
-    const res = new LootAsync(gameId, gamePath, gameLocalPath, language, logCallback, onFork, (err) => {
-      if (err !== null) {
-        callback(err);
-      } else {
-        callback(null, res);
-      }
-    });
+    try {
+      const res = new LootAsync(gameId, gamePath, gameLocalPath, language, logCallback, onFork, (err) => {
+        if (err !== null) {
+          callback(err);
+        } else {
+          callback(null, res);
+        }
+      });
+    } catch (err) {
+      callback(err);
+    }
   }
 
   constructor(gameId, gamePath, gameLocalPath, language, logCallback, onFork, callback) {
     this.queue = [];
     this.logCallback = logCallback;
     this.didClose = false;
+    this.onFork = onFork;
+    this.initArgs = [
+      gameId,
+      gamePath,
+      gameLocalPath,
+      language,
+    ];
 
-    this.currentCallback = () => {
-      this.enqueue({
-        type: 'init',
-        args: [
-          gameId,
-          gamePath,
-          gameLocalPath,
-          language,
-        ]
-      }, callback);
+    let initCallback = (err) => {
+      // ensure the init callback isn't called twice.
+      initCallback = (err) => {
+        logCallback(4, err.message);
+      }
+      callback(err);
     }
 
     this.makeProxy('updateMasterlist');
@@ -72,18 +88,37 @@ class LootAsync {
     this.makeProxy('setUserGroups');
     this.makeProxy('getGeneralMessages');
 
-    const id = this.generateId();
+    this.id = this.generateId();
     this.ipc = new net.Server();
-    this.ipc.listen(`\\\\?\\pipe\\loot-ipc-${id}`, () => {
-      this.ipc.on('connection', socket => {
-        this.socket = socket;
-        socket.on('data', data => {
-          this.handleResponse(JSON.parse(data.toString()));
+    try {
+      // this seems to fail for some users with EINVAL. why?
+      // May be a wine-only problem but that's not confirmed
+      this.ipc.listen(`\\\\?\\pipe\\loot-ipc-${this.id}`, () => {
+        this.ipc.on('connection', socket => {
+          this.socket = socket;
+          socket.on('data', data => {
+            this.handleResponse(JSON.parse(data.toString()));
+          })
         })
-      })
 
-      this.worker = onFork(`${__dirname}${path.sep}async.js`, [id]);
-    });
+        this.restart(initCallback);
+      })
+      .on('error', (err) => {
+        initCallback(err);
+      });
+    } catch (err) {
+      initCallback(new Error('failed to establish pipe'));
+    }
+  }
+
+  restart(callback) {
+    this.worker = this.onFork(`${__dirname}${path.sep}async.js`, [this.id]);
+    this.currentCallback = () => {
+      this.enqueue({
+        type: 'init',
+        args: this.initArgs,
+      }, callback);
+    }
   }
 
   generateId() {
@@ -111,10 +146,13 @@ class LootAsync {
       let cb = args[args.length - 1];
       if (typeof(cb) !== 'function') {
         cb = undefined;
+      } else {
+        args = args.slice(0, args.length - 1);
       }
+
       this.enqueue({
         type: name,
-        args: args.slice(0, args.length - 1),
+        args,
       }, cb);
     };
   }
@@ -123,7 +161,7 @@ class LootAsync {
     if (this.didClose) {
       return callback(new AlreadyClosed());
     }
-    if (this.currentCallback === null) {
+    if (!this.currentCallback) {
       this.deliver(message, callback);
     } else {
       this.queue.push({ message, callback });
@@ -132,11 +170,22 @@ class LootAsync {
 
   deliver(message, callback) {
     this.currentCallback = callback;
+    const handleError = err => {
+      if (!!err) {
+        if (!!this.currentCallback) {
+          if (err.code === 'EPIPE') {
+            this.currentCallback(new RemoteDied());
+          } else {
+            this.currentCallback(err);
+          }
+        }
+        this.processQueue();
+      }
+    };
     try {
-      this.socket.write(JSON.stringify(message));
+      this.socket.write(JSON.stringify(message), handleError);
     } catch (err) {
-      this.currentCallback(new Error('LOOT closed? Please check your log. Error was: ' + err.message));
-      this.processQueue();
+      handleError(err);
     }
   }
 

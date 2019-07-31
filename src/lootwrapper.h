@@ -304,6 +304,8 @@ private:
 
 };
 
+void SetErrorLanguageEN();
+
 #include <nbind/nbind.h>
 
 NBIND_CLASS(MasterlistInfo) {
@@ -409,4 +411,5 @@ using loot::IsCompatible;
 
 NBIND_GLOBAL() {
   function(IsCompatible);
+  function(SetErrorLanguageEN);
 }

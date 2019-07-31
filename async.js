@@ -30,6 +30,7 @@ const client = net.connect(`\\\\?\\pipe\\loot-ipc-${process.argv[2]}`, (arg) => 
     let result;
     try {
       if (event.type === 'init') {
+        lib.SetErrorLanguageEN();
         instance = new lib.Loot(...event.args, logCallback);
       } else if (event.type === 'terminate') {
         send({});

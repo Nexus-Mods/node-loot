@@ -27,7 +27,7 @@ export type LogCallback = (level: number, message: string) => void;
 export type ForkFunction = (module: string, args: string[]) => void;
 
 export class Loot extends NBindBase {
-  constructor(gameId: string, gamePath: string, gameLocalPath: string, language: string, logCallback: LogCallback, onFork: ForkFunction): Loot;
+  constructor(gameId: string, gamePath: string, gameLocalPath: string, language: string, logCallback: LogCallback);
   
   updateMasterlist(masterlistPath: string, repoUrl: string, repoBranch: string): boolean;
   getMasterlistRevision(masterlistPath: string, getShortId: boolean): MasterlistInfo;
@@ -48,7 +48,8 @@ export class Loot extends NBindBase {
 }
 
 export class LootAsync {
-  static create(gameId: string, gamePath: string, gameLocalPath: string, language: string, logCallback: LogCallback, onFork: ForkFunction): LootAsync;
+	static create(gameId: string, gamePath: string, gameLocalPath: string, language: string, logCallback: LogCallback, onFork: ForkFunction, callback: (err: Error, loot: LootAsync) => void);
+	restart(callback: (err: Error) => void);
   close(): void;
 
   updateMasterlist(masterlistPath: string, repoUrl: string, repoBranch: string, callback: (err: Error, didUpdate: boolean) => void): void;
@@ -96,7 +97,7 @@ export class PluginCleaningData extends NBindBase {
 	CRC: number;
 
 	/** uint32_t ITMCount; -- Read-only */
-	ITMCount: number;
+	itmCount: number;
 
 	/** uint32_t deletedReferenceCount; -- Read-only */
 	deletedReferenceCount: number;

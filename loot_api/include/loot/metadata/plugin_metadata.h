@@ -96,6 +96,13 @@ public:
   LOOT_API std::string GetLowercasedName() const;
 
   /**
+   * Get the plugin name, normalized to be suitable for case-insensitive
+   * filename comparison.
+   * @return The normalized plugin name.
+   */
+  LOOT_API std::string GetNormalizedName() const;
+
+  /**
    * Check if the plugin metadata is enabled for use during sorting.
    * @return True if the metadata will be used during sorting, false otherwise.
    */
@@ -179,6 +186,11 @@ public:
    *        The name of the group this plugin belongs to.
    */
   LOOT_API void SetGroup(const std::string& group);
+
+  /**
+   * Unsets the plugin's group.
+   */
+  LOOT_API void UnsetGroup();
 
   /**
    * Set the files that the plugin must load after.
@@ -307,7 +319,7 @@ struct hash<loot::PluginMetadata> {
    * @return The hash generated from the plugin's lowercased filename.
    */
   size_t operator()(const loot::PluginMetadata& plugin) const {
-    return hash<string>()(plugin.GetLowercasedName());
+    return hash<string>()(plugin.GetNormalizedName());
   }
 };
 }
