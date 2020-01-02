@@ -68,7 +68,7 @@ export class LootAsync {
   setUserGroups(groups: Group[]);
   getGroupsPath(fromGroupName: string, toGroupName: string): Vertex[];
   getGeneralMessages(evaluateConditions: boolean): Message[];
-};
+}
 
 export class MasterlistInfo extends NBindBase {
 	revisionId: string;

@@ -180,7 +180,6 @@ Loot::Loot(std::string gameId, std::string gamePath, std::string gameLocalPath, 
   v8::Isolate* isolate = v8::Isolate::GetCurrent();
 
   try {
-    loot::InitialiseLocale(language);
     /*
     TODO: Disabled for now because it causes the process to hang when calling sortPlugins.
     loot::SetLoggingCallback([this](loot::LogLevel level, const char *message) {
