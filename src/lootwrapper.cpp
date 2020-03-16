@@ -325,7 +325,6 @@ std::vector<std::string> Loot::sortPlugins(std::vector<std::string> input)
   v8::Isolate* isolate = v8::Isolate::GetCurrent();
 
   try {
-    std::cout << "sort plugins" << std::endl;
     return m_Game->SortPlugins(input);
   } catch (loot::CyclicInteractionError &e) {
     isolate->ThrowException(CyclicalInteractionException(e));
