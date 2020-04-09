@@ -1,6 +1,6 @@
 {
   "name": "loot",
-  "version": "2.2.4",
+  "version": "2.2.5",
   "description": "Wrapper around the LOOT library for sorting plugins of gamebryo games (Oblivion, Skyrim, Fallout 3/NV/4)",
   "scripts": {
     "autogypi": "autogypi",
@@ -9,9 +9,6 @@
   },
   "author": "Black Tree Gaming Ltd.",
   "license": "GPL-3.0",
-  "resolutions": {
-    "**/mkdirp/minimist": "1.2.2"
-  },
   "dependencies": {
     "autogypi": "^0.2.2",
     "nbind": "^0.3.15",
