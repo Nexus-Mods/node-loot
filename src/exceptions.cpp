@@ -32,17 +32,17 @@ const char * translateCode(DWORD err) {
   }
 }
 
-void setNodeErrorCode(v8::Local<v8::Object> err, DWORD errCode) {
-  if (!err->Has("code"_n)) {
-    err->Set("code"_n, Nan::New(translateCode(errCode)).ToLocalChecked());
+void setNodeErrorCode(v8::Local<v8::Context> context, v8::Local<v8::Object> err, DWORD errCode) {
+  if (!err->Has(context, "code"_n).FromMaybe(false)) {
+    err->Set(context, "code"_n, Nan::New(translateCode(errCode)).ToLocalChecked());
   }
 }
 
-v8::Local<v8::Value> WinApiException(DWORD lastError, const char * func, const char * path) {
+v8::Local<v8::Value> WinApiException(v8::Local<v8::Context> context, DWORD lastError, const char * func, const char * path) {
 
   std::wstring errStr = strerror(lastError);
   std::string err = toMB(errStr.c_str(), CodePage::UTF8, errStr.size());
   v8::Local<v8::Value> res = node::WinapiErrnoException(v8::Isolate::GetCurrent(), lastError, func, err.c_str(), path);
-  setNodeErrorCode(res->ToObject(), lastError);
+  setNodeErrorCode(context, res->ToObject(), lastError);
   return res;
 }

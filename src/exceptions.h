@@ -9,9 +9,10 @@ static std::wstring strerror(DWORD errorno);
 
 const char *translateCode(DWORD err);
 
-void setNodeErrorCode(v8::Local<v8::Object> err, DWORD errCode);
+void setNodeErrorCode(v8::Local<v8::Context> context, v8::Local<v8::Object> err, DWORD errCode);
 
-v8::Local<v8::Value> WinApiException(DWORD lastError
+v8::Local<v8::Value> WinApiException(v8::Local<v8::Context> context
+                                     , DWORD lastError
                                      , const char *func = nullptr
                                      , const char* path = nullptr);
 
