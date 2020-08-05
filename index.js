@@ -96,9 +96,18 @@ class LootAsync {
       this.ipc.listen(`\\\\?\\pipe\\loot-ipc-${this.id}`, () => {
         this.ipc.on('connection', socket => {
           this.socket = socket;
-          socket.on('data', data => {
+          socket
+          .on('data', data => {
             this.handleResponse(JSON.parse(data.toString()));
           })
+          .on('error', err => {
+            if (this.currentCallback !== undefined) {
+              this.currentCallback(err);
+              this.currentCallback = undefined;
+            } else {
+              this.logCallback(4, err.message);
+            }
+          });
         })
 
         this.restart(initCallback);

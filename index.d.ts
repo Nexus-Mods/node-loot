@@ -119,6 +119,8 @@ export class PluginMetadata extends NBindBase {
 	/** std::string name; -- Read-only */
 	name: string;
 
+  group: string;
+
 	/** std::vector<Tag> tags; -- Read-only */
 	tags: Tag[];
 
