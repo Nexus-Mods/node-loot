@@ -43,6 +43,6 @@ v8::Local<v8::Value> WinApiException(v8::Local<v8::Context> context, DWORD lastE
   std::wstring errStr = strerror(lastError);
   std::string err = toMB(errStr.c_str(), CodePage::UTF8, errStr.size());
   v8::Local<v8::Value> res = node::WinapiErrnoException(v8::Isolate::GetCurrent(), lastError, func, err.c_str(), path);
-  setNodeErrorCode(context, res->ToObject(), lastError);
+  setNodeErrorCode(context, res->ToObject(context).ToLocalChecked(), lastError);
   return res;
 }
