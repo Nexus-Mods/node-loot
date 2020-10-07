@@ -5,6 +5,7 @@
 #include <map>
 #include <memory>
 #include <set>
+#include <unordered_set>
 #include <nbind/api.h>
 
 template <typename T, typename LootT> std::vector<T> transform(const std::vector<LootT> &input) {
@@ -139,7 +140,7 @@ public:
   std::optional<std::string> GetVersion() const { return m_Reference->GetVersion(); }
   std::vector<std::string> GetMasters() const { return m_Reference->GetMasters(); }
   std::vector<Tag> GetBashTags() const {
-    const std::set<loot::Tag> tags = m_Reference->GetBashTags();
+    const std::vector<loot::Tag> tags = m_Reference->GetBashTags();
     std::vector<Tag> result;
     for (const auto &tag : tags) {
       result.push_back(Tag(tag));
@@ -199,10 +200,6 @@ public:
 
   std::string GetName() const {
     return m_Wrapped.GetName();
-  }
-
-  bool IsEnabled() const {
-    return m_Wrapped.IsEnabled();
   }
 
   std::optional<std::string> GetGroup() const {
@@ -369,7 +366,6 @@ NBIND_CLASS(PluginMetadata) {
   getter(GetLocations);
   getter(GetRequirements);
   getter(GetMessages);
-  getter(IsEnabled);
   getter(GetGroup);
 }
  

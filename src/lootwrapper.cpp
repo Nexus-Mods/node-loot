@@ -413,9 +413,9 @@ std::vector<Group> Loot::getUserGroups() const {
 
 void Loot::setUserGroups(const std::vector<Group>& groups) {
   try {
-    std::unordered_set<loot::Group> result;
+    std::vector<loot::Group> result;
     for (const auto &ele : groups) {
-      result.insert(ele);
+      result.push_back(ele);
     }
     m_Game->GetDatabase()->SetUserGroups(result);
   } catch (const std::exception &e) {
@@ -481,7 +481,7 @@ void PluginMetadata::toJS(nbind::cbOutput output) const {
   auto group = GetGroup();
   output(GetName(), GetMessages(), GetTags(), GetCleanInfo(), GetDirtyInfo(),
     GetIncompatibilities(), GetLoadAfterFiles(), GetLocations(), GetRequirements(),
-    IsEnabled(), group.has_value() ? *group : std::string());
+    group.has_value() ? *group : std::string());
 }
 
 inline MasterlistInfo::MasterlistInfo(loot::MasterlistInfo info)

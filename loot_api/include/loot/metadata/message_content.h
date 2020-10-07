@@ -73,14 +73,14 @@ public:
   /**
    * A less-than operator implemented with no semantics so that MessageContent
    * objects can be stored in sets.
-   * @returns True if this MessageContent's text is lexicographically less than
-   *          the given MessageContent's text, false otherwise.
+   * @returns True if this MessageContent is less than the given 
+   *          MessageContent, false otherwise.
    */
   LOOT_API bool operator<(const MessageContent& rhs) const;
 
   /**
-   * Check if two MessageContent objects are equal by comparing their texts.
-   * @returns True if the texts are equal, false otherwise.
+   * Check if two MessageContent objects are equal by comparing their fields.
+   * @returns True if the objects' fields are equal, false otherwise.
    */
   LOOT_API bool operator==(const MessageContent& rhs) const;
 
@@ -103,6 +103,36 @@ private:
   std::string text_;
   std::string language_;
 };
+
+/**
+ * Check if two MessageContent objects are not equal.
+ * @returns True if the MessageContent objects are not equal, false otherwise.
+ */
+LOOT_API bool operator!=(const MessageContent& lhs, const MessageContent& rhs);
+
+/**
+ * Check if the first MessageContent object is greater than the second 
+ * MessageContent object.
+ * @returns True if the second MessageContent object is less than the first 
+ *          MessageContent object, false otherwise.
+ */
+LOOT_API bool operator>(const MessageContent& lhs, const MessageContent& rhs);
+
+/**
+ * Check if the first MessageContent object is less than or equal to the second
+ * MessageContent object.
+ * @returns True if the first MessageContent object is not greater than the 
+ *          second MessageContent object, false otherwise.
+ */
+LOOT_API bool operator<=(const MessageContent& lhs, const MessageContent& rhs);
+
+/**
+ * Check if the first MessageContent object is greater than or equal to the 
+ * second MessageContent object.
+ * @returns True if the first MessageContent object is not less than the second
+ *          MessageContent object, false otherwise.
+ */
+LOOT_API bool operator>=(const MessageContent& lhs, const MessageContent& rhs);
 }
 
 #endif

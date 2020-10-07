@@ -147,9 +147,6 @@ export class PluginMetadata extends NBindBase {
 
 	/** std::vector<File> requirements; -- Read-only */
 	requirements: File[];
-
-	/** bool IsEnabled; -- Read-only */
-	IsEnabled: boolean;
 }
 
 export class Priority extends NBindBase {

@@ -2,7 +2,7 @@ function attachBindings(binding) {
   binding.bind('PluginMetadata',
                function(name, messages, tags, cleanInfo, dirtyInfo,
                         incompatibilities, loadAfterFiles, locations,
-                        requirements, isEnabled, group) {
+                        requirements, group) {
                  this.name = name;
                  this.messages = messages;
                  this.tags = tags;
@@ -13,7 +13,6 @@ function attachBindings(binding) {
                  this.loadAfterFiles = loadAfterFiles;
                  this.locations = locations;
                  this.requirements = requirements;
-                 this.isEnabled = isEnabled;
                });
 
   binding.bind('PluginInterface',

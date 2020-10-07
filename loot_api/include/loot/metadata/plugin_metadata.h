@@ -64,9 +64,8 @@ public:
    * Merge metadata from the given PluginMetadata object into this object.
    *
    * If an equal metadata object already exists in this PluginMetadata object,
-   * it is not duplicated. This object's enabled state is replaced by the given
-   * object's state. This object's group is replaced by the given object's group
-   * if the latter is explicit.
+   * it is not duplicated. This object's group is replaced by the given object's
+   * group if the latter is explicit.
    * @param plugin
    *        The plugin metadata to merge.
    */
@@ -79,7 +78,7 @@ public:
    *         The PluginMetadata object to compare against.
    * @return A PluginMetadata object containing the metadata in this object that
    *         is not in the given object. The returned object inherits this
-   *         object's enabled state and group.
+   *         object's group.
    */
   LOOT_API PluginMetadata NewMetadata(const PluginMetadata& plugin) const;
 
@@ -88,12 +87,6 @@ public:
    * @return The plugin name.
    */
   LOOT_API std::string GetName() const;
-
-  /**
-   * Check if the plugin metadata is enabled for use during sorting.
-   * @return True if the metadata will be used during sorting, false otherwise.
-   */
-  LOOT_API bool IsEnabled() const;
 
   /**
    * Get the plugin's group.
@@ -107,19 +100,19 @@ public:
    * Get the plugins that the plugin must load after.
    * @return The plugins that the plugin must load after.
    */
-  LOOT_API std::set<File> GetLoadAfterFiles() const;
+  LOOT_API std::vector<File> GetLoadAfterFiles() const;
 
   /**
    * Get the files that the plugin requires to be installed.
    * @return The files that the plugin requires to be installed.
    */
-  LOOT_API std::set<File> GetRequirements() const;
+  LOOT_API std::vector<File> GetRequirements() const;
 
   /**
    * Get the files that the plugin is incompatible with.
    * @return The files that the plugin is incompatible with.
    */
-  LOOT_API std::set<File> GetIncompatibilities() const;
+  LOOT_API std::vector<File> GetIncompatibilities() const;
 
   /**
    * Get the plugin's messages.
@@ -131,25 +124,25 @@ public:
    * Get the plugin's Bash Tag suggestions.
    * @return The plugin's Bash Tag suggestions.
    */
-  LOOT_API std::set<Tag> GetTags() const;
+  LOOT_API std::vector<Tag> GetTags() const;
 
   /**
    * Get the plugin's dirty plugin information.
    * @return The PluginCleaningData objects that identify the plugin as dirty.
    */
-  LOOT_API std::set<PluginCleaningData> GetDirtyInfo() const;
+  LOOT_API std::vector<PluginCleaningData> GetDirtyInfo() const;
 
   /**
    * Get the plugin's clean plugin information.
    * @return The PluginCleaningData objects that identify the plugin as clean.
    */
-  LOOT_API std::set<PluginCleaningData> GetCleanInfo() const;
+  LOOT_API std::vector<PluginCleaningData> GetCleanInfo() const;
 
   /**
    * Get the locations at which this plugin can be found.
    * @return The locations at which this plugin can be found.
    */
-  LOOT_API std::set<Location> GetLocations() const;
+  LOOT_API std::vector<Location> GetLocations() const;
 
   /**
    * Get the plugin's messages as SimpleMessage objects for the given language.
@@ -159,13 +152,6 @@ public:
    */
   LOOT_API std::vector<SimpleMessage> GetSimpleMessages(
       const std::string& language) const;
-
-  /**
-   * Set whether the plugin metadata is enabled for use during sorting or not.
-   * @param enabled
-   *        The value to set.
-   */
-  LOOT_API void SetEnabled(const bool enabled);
 
   /**
    * Set the plugin's group.
@@ -184,21 +170,21 @@ public:
    * @param after
    *        The files to set.
    */
-  LOOT_API void SetLoadAfterFiles(const std::set<File>& after);
+  LOOT_API void SetLoadAfterFiles(const std::vector<File>& after);
 
   /**
    * Set the files that the plugin requires to be installed.
    * @param requirements
    *        The files to set.
    */
-  LOOT_API void SetRequirements(const std::set<File>& requirements);
+  LOOT_API void SetRequirements(const std::vector<File>& requirements);
 
   /**
    * Set the files that the plugin must load after.
    * @param incompatibilities
    *        The files to set.
    */
-  LOOT_API void SetIncompatibilities(const std::set<File>& incompatibilities);
+  LOOT_API void SetIncompatibilities(const std::vector<File>& incompatibilities);
 
   /**
    * Set the plugin's messages.
@@ -212,28 +198,28 @@ public:
    * @param tags
    *        The Bash Tag suggestions to set.
    */
-  LOOT_API void SetTags(const std::set<Tag>& tags);
+  LOOT_API void SetTags(const std::vector<Tag>& tags);
 
   /**
    * Set the plugin's dirty information.
    * @param info
    *        The dirty information to set.
    */
-  LOOT_API void SetDirtyInfo(const std::set<PluginCleaningData>& info);
+  LOOT_API void SetDirtyInfo(const std::vector<PluginCleaningData>& info);
 
   /**
    * Set the plugin's clean information.
    * @param info
    *        The clean information to set.
    */
-  LOOT_API void SetCleanInfo(const std::set<PluginCleaningData>& info);
+  LOOT_API void SetCleanInfo(const std::vector<PluginCleaningData>& info);
 
   /**
    * Set the plugin's locations.
    * @param locations
    *        The locations to set.
    */
-  LOOT_API void SetLocations(const std::set<Location>& locations);
+  LOOT_API void SetLocations(const std::vector<Location>& locations);
 
   /**
    * Check if no plugin metadata is set.
@@ -250,47 +236,29 @@ public:
   LOOT_API bool IsRegexPlugin() const;
 
   /**
-   * Check if two PluginMetadata objects are equal by comparing their name
-   * values.
-   * @returns True if the plugin names are case-insensitively equal, false
-   *          otherwise.
+   * Check if the given plugin name matches this plugin metadata object's
+   * name field.
+   *
+   * If the name field is a regular expression, the given plugin name will be
+   * matched against it, otherwise the strings will be compared
+   * case-insensitively. The given plugin name must be literal, i.e. not a
+   * regular expression.
+   * @returns True if the given plugin name matches this metadata's plugin 
+   *          name, false otherwise.
    */
-  LOOT_API bool operator==(const PluginMetadata& rhs) const;
-
-  /**
-   * Check if two PluginMetadata objects are not equal by comparing their name
-   * values.
-   * @returns True if the plugin names are not case-insensitively equal, false
-   *          otherwise.
-   */
-  LOOT_API bool operator!=(const PluginMetadata& rhs) const;
-
-  /**
-   * Check if object's name value is equal to the given string.
-   * @returns True if the plugin name is case-insensitively equal to the given
-   *          string, false otherwise.
-   */
-  LOOT_API bool operator==(const std::string& rhs) const;
-
-  /**
-   * Check if object's name value is not equal to the given string.
-   * @returns True if the plugin name is not case-insensitively equal to the
-   *          given string, false otherwise.
-   */
-  LOOT_API bool operator!=(const std::string& rhs) const;
+  LOOT_API bool NameMatches(const std::string& pluginName) const;
 
 private:
   std::string name_;
-  bool enabled_;
   std::optional<std::string> group_;
-  std::set<File> loadAfter_;
-  std::set<File> requirements_;
-  std::set<File> incompatibilities_;
+  std::vector<File> loadAfter_;
+  std::vector<File> requirements_;
+  std::vector<File> incompatibilities_;
   std::vector<Message> messages_;
-  std::set<Tag> tags_;
-  std::set<PluginCleaningData> dirtyInfo_;
-  std::set<PluginCleaningData> cleanInfo_;
-  std::set<Location> locations_;
+  std::vector<Tag> tags_;
+  std::vector<PluginCleaningData> dirtyInfo_;
+  std::vector<PluginCleaningData> cleanInfo_;
+  std::vector<Location> locations_;
 };
 }
 

@@ -28,6 +28,7 @@
 
 #include "loot/api_decorator.h"
 #include "loot/metadata/conditional_metadata.h"
+#include "loot/metadata/filename.h"
 
 namespace loot {
 /**
@@ -46,27 +47,26 @@ public:
    * @param  name
    *         The filename of the file.
    * @param  display
-   *         The name to be displayed for the file in messages.
+   *         The name to be displayed for the file in messages, formatted using
+   *         GitHub Flavored Markdown.
    * @param  condition
    *         The File's condition string.
    * @return A File object.
    */
   LOOT_API explicit File(const std::string& name,
-                const std::string& display = "",
-                const std::string& condition = "");
+                         const std::string& display = "",
+                         const std::string& condition = "");
 
   /**
    * A less-than operator implemented with no semantics so that File objects can
    * be stored in sets.
-   * @returns True if this File's name is case-insensitively lexicographically
-   *          less than the given File's name, false otherwise.
+   * @returns True if this File is less than the given File, false otherwise.
    */
   LOOT_API bool operator<(const File& rhs) const;
 
   /**
-   * Check if two File objects are equal by comparing their filenames.
-   * @returns True if the filenames are case-insensitively equal, false
-   *          otherwise.
+   * Check if two File objects are equal by comparing their fields.
+   * @returns True if the objects' fields are equal, false otherwise.
    */
   LOOT_API bool operator==(const File& rhs) const;
 
@@ -74,18 +74,52 @@ public:
    * Get the filename of the file.
    * @return The file's filename.
    */
-  LOOT_API std::string GetName() const;
+  LOOT_API Filename GetName() const;
 
   /**
    * Get the display name of the file.
-   * @return The file's display name.
+   *
+   * If the File was constructed with an empty display string, the name field
+   * will be returned instead, with any `ASCII punctuation characters
+   * <https://github.github.com/gfm/#ascii-punctuation-character>`_ escaped.
+   * Escaping is not performed if returning the value of the display string.
+   * @return The file's display name or filename.
    */
   LOOT_API std::string GetDisplayName() const;
 
 private:
-  std::string name_;
+  Filename name_;
   std::string display_;
 };
+
+/**
+ * Check if two File objects are not equal.
+ * @returns True if the File objects are not equal, false otherwise.
+ */
+LOOT_API bool operator!=(const File& lhs, const File& rhs);
+
+/**
+ * Check if the first File object is greater than the second File object.
+ * @returns True if the second File object is less than the first File object,
+ *          false otherwise.
+ */
+LOOT_API bool operator>(const File& lhs, const File& rhs);
+
+/**
+ * Check if the first File object is less than or equal to the second File
+ * object.
+ * @returns True if the first File object is not greater than the second File
+ *          object, false otherwise.
+ */
+LOOT_API bool operator<=(const File& lhs, const File& rhs);
+
+/**
+ * Check if the first File object is greater than or equal to the second File
+ * object.
+ * @returns True if the first File object is not less than the second File
+ *          object, false otherwise.
+ */
+LOOT_API bool operator>=(const File& lhs, const File& rhs);
 }
 
 #endif

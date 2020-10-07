@@ -56,7 +56,8 @@ public:
    *         The utility that the plugin cleanliness was checked with.
    * @return A PluginCleaningData object.
    */
-  LOOT_API explicit PluginCleaningData(uint32_t crc, const std::string& utility);
+  LOOT_API explicit PluginCleaningData(uint32_t crc,
+                                       const std::string& utility);
 
   /**
    * Construct a PluginCleaningData object with the given values.
@@ -76,22 +77,23 @@ public:
    * @return A PluginCleaningData object.
    */
   LOOT_API explicit PluginCleaningData(uint32_t crc,
-                              const std::string& utility,
-                              const std::vector<MessageContent>& info,
-                              unsigned int itm,
-                              unsigned int ref,
-                              unsigned int nav);
+                                       const std::string& utility,
+                                       const std::vector<MessageContent>& info,
+                                       unsigned int itm,
+                                       unsigned int ref,
+                                       unsigned int nav);
   /**
    * A less-than operator implemented with no semantics so that
    * PluginCleaningData objects can be stored in sets.
-   * @returns True if this PluginCleaningData's CRC is less than the given
-   *          PluginCleaningData's CRC, false otherwise.
+   * @returns True if this PluginCleaningData is less than the given
+   *          PluginCleaningData, false otherwise.
    */
   LOOT_API bool operator<(const PluginCleaningData& rhs) const;
 
   /**
-   * Check if two PluginCleaningData objects are equal by comparing their CRCs.
-   * @returns True if the CRCs are equal, false otherwise.
+   * Check if two PluginCleaningData objects are equal by comparing their
+   * fields.
+   * @returns True if the objects' fields are equal, false otherwise.
    */
   LOOT_API bool operator==(const PluginCleaningData& rhs) const;
 
@@ -152,6 +154,40 @@ private:
   std::string utility_;
   std::vector<MessageContent> info_;
 };
+
+/**
+ * Check if two MessageContent objects are not equal.
+ * @returns True if the MessageContent objects are not equal, false otherwise.
+ */
+LOOT_API bool operator!=(const PluginCleaningData& lhs,
+                         const PluginCleaningData& rhs);
+
+/**
+ * Check if the first PluginCleaningData object is greater than the second
+ * PluginCleaningData object.
+ * @returns True if the second PluginCleaningData object is less than the first
+ *          PluginCleaningData object, false otherwise.
+ */
+LOOT_API bool operator>(const PluginCleaningData& lhs,
+                        const PluginCleaningData& rhs);
+
+/**
+ * Check if the first PluginCleaningData object is less than or equal to the
+ * second PluginCleaningData object.
+ * @returns True if the first PluginCleaningData object is not greater than the
+ *          second PluginCleaningData object, false otherwise.
+ */
+LOOT_API bool operator<=(const PluginCleaningData& lhs,
+                         const PluginCleaningData& rhs);
+
+/**
+ * Check if the first PluginCleaningData object is greater than or equal to the
+ * second PluginCleaningData object.
+ * @returns True if the first PluginCleaningData object is not less than the
+ *          second PluginCleaningData object, false otherwise.
+ */
+LOOT_API bool operator>=(const PluginCleaningData& lhs,
+                         const PluginCleaningData& rhs);
 }
 
 #endif
