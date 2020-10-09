@@ -1,7 +1,5 @@
 {
     "dependencies": [
-        "nbind",
-        "nan"
     ],
     "includes": []
 }

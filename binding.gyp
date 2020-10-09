@@ -1,6 +1,7 @@
 {
     "targets": [
         {
+          "target_name": "node-loot",
             "includes": [
                 "auto.gypi"
             ],
@@ -10,20 +11,29 @@
                 "src/exceptions.cpp",
                 "src/exceptions.h",
                 "src/string_cast.cpp",
-                "src/string_cast.h"
+                "src/string_cast.h",
+                "src/util.cpp",
+                "src/util.h"
             ],
             "include_dirs": [
-                "./loot_api/include"
+                "./loot_api/include",
+                "<!(node -p \"require('node-addon-api').include_dir\")"
             ],
             "libraries": [
                 "-l../loot_api/loot"
             ],
-            'cflags!': ['-fno-exceptions'],
+            'cflags!': ['-fno-exceptions', '-g', '-O0'],
             'cflags_cc!': ['-fno-exceptions'],
+            'msvs_settings': {
+              'VCCLCompilerTool': {
+                'ExceptionHandling': 1,
+                'RuntimeLibrary': 2,
+                'Optimization': 0
+              },
+            },
             'msbuild_settings': {
                 "ClCompile": {
-                    "ExceptionHandling": 1,
-                    'AdditionalOptions': ['-std:c++17', '/Ob2', '/Oi', '/Ot', '/Oy', '/GL', '/GF', '/Gy', '/MT']
+                    'AdditionalOptions': ['-std:c++17', '/Ob2', '/Oi', '/Ot', '/Oy', '/GL', '/GF', '/Gy']
                 }
             },
             "conditions": [

@@ -1,22 +1,10 @@
-const nbind = require('nbind');
-const net = require('net');
+net = require('net');
 const path = require('path');
 
-const attachBindings = require('./bindings');
+const { Loot, IsCompatible } = require('./build/Release/node-loot');
 
 // in electron renderer thread we have native webworkers,
 // otherwise we need a module
-
-let binding;
-try {
-  binding = nbind.init(path.join(__dirname, 'loot'));
-} catch (err) {
-  binding = nbind.init();
-}
-
-attachBindings(binding);
-
-const lib = binding.lib;
 
 class AlreadyClosed extends Error {
   constructor() {
@@ -241,7 +229,9 @@ class LootAsync {
   }
 }
 
-module.exports = Object.assign(lib, {
+module.exports = {
   AlreadyClosed,
-  LootAsync
-});
+  Loot,
+  LootAsync,
+  IsCompatible,
+};

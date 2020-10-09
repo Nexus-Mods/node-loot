@@ -1,5 +1,4 @@
 #include "string_cast.h"
-#include <nan.h>
 
 #ifdef WIN32
 
@@ -77,7 +76,3 @@ std::string toMB(const wchar_t * const & source, CodePage codePage, size_t sourc
 }
 
 #endif // WIN32
-
-v8::Local<v8::String> operator "" _n(const char *input, size_t) {
-  return Nan::New(input).ToLocalChecked();
-}

@@ -1,24 +1,14 @@
-import { Buffer } from "nbind/dist/shim";
-
-export class NBindBase { free?(): void }
-
-export class File extends NBindBase {
-	/** std::string name; -- Read-only */
+export class File {
 	name: string;
-
-	/** std::string displayName; -- Read-only */
 	displayName: string;
 }
 
-export class Location extends NBindBase {
-	/** std::string URL; -- Read-only */
+export class Location {
 	URL: string;
-
-	/** std::string name; -- Read-only */
 	name: string;
 }
 
-export class Group extends NBindBase {
+export class Group {
 	name: string;
 	afterGroups: string[];
 }
@@ -26,7 +16,7 @@ export class Group extends NBindBase {
 export type LogCallback = (level: number, message: string) => void;
 export type ForkFunction = (module: string, args: string[]) => void;
 
-export class Loot extends NBindBase {
+export class Loot {
   constructor(gameId: string, gamePath: string, gameLocalPath: string, language: string, logCallback: LogCallback);
   
   updateMasterlist(masterlistPath: string, repoUrl: string, repoBranch: string): boolean;
@@ -70,113 +60,64 @@ export class LootAsync {
   getGeneralMessages(evaluateConditions: boolean): Message[];
 }
 
-export class MasterlistInfo extends NBindBase {
+export class MasterlistInfo {
 	revisionId: string;
 	revisionDate: string;
 	isModified: boolean;
 }
 
-export class Message extends NBindBase {
-	/** std::string value(const std::string &); */
+export class Message {
 	value(language: string): string;
 
-	/** uint32_t type; -- Read-only */
 	type: number;
 }
 
-export class MessageContent extends NBindBase {
-	/** std::string text; -- Read-only */
+export class MessageContent {
 	text: string;
-
-	/** std::string language; -- Read-only */
 	language: string;
 }
 
-export class PluginCleaningData extends NBindBase {
-	/** uint32_t CRC; -- Read-only */
+export class PluginCleaningData {
 	CRC: number;
-
-	/** uint32_t ITMCount; -- Read-only */
 	itmCount: number;
-
-	/** uint32_t deletedReferenceCount; -- Read-only */
 	deletedReferenceCount: number;
-
-	/** uint32_t deletedNavmeshCount; -- Read-only */
 	deletedNavmeshCount: number;
-
-	/** std::string cleaningUtility; -- Read-only */
 	cleaningUtility: string;
-
-	/** std::vector<MessageContent> info; -- Read-only */
 	info: MessageContent[];
 }
 
-export class PluginMetadata extends NBindBase {
-	/** std::vector<Message> messages; -- Read-only */
+export class PluginMetadata {
 	messages: Message[];
-
-	/** std::string name; -- Read-only */
 	name: string;
-
   group: string;
-
-	/** std::vector<Tag> tags; -- Read-only */
 	tags: Tag[];
-
-	/** std::vector<PluginCleaningData> cleanInfo; -- Read-only */
 	cleanInfo: PluginCleaningData[];
-
-	/** std::vector<PluginCleaningData> dirtyInfo; -- Read-only */
 	dirtyInfo: PluginCleaningData[];
-
-	/** Priority globalPriority; -- Read-only */
-	globalPriority: Priority;
-
-	/** std::vector<File> incompatibilities; -- Read-only */
 	incompatibilities: File[];
-
-	/** std::vector<File> loadAfterFiles; -- Read-only */
 	loadAfterFiles: File[];
-
-	/** Priority localPriority; -- Read-only */
-	localPriority: Priority;
-
-	/** std::vector<Location> locations; -- Read-only */
 	locations: Location[];
-
-	/** std::vector<File> requirements; -- Read-only */
 	requirements: File[];
 }
 
-export class Priority extends NBindBase {
-	/** int16_t value; -- Read-only */
-	value: number;
-
-	/** bool IsExplicit; -- Read-only */
-	IsExplicit: boolean;
-}
-
-export class Tag extends NBindBase {
-	/** bool IsAddition; -- Read-only */
-	IsAddition: boolean;
-
-	/** std::string name; -- Read-only */
+export class Tag {
+	isAddition: boolean;
+	isConditional: boolean;
 	name: string;
+	condition: string;
 }
 
-export class Vertex extends NBindBase {
+export class Vertex {
 	name: string;
 	typeOfEdgeToNextVertex: string;
 }
 
-export class PluginInterface extends NBindBase {
+export class PluginInterface {
 	name: string;
 	version: string;
 	masters: string[];
 	bashTags: Tag[];
  
-	getCRC: number;
+	crc: number;
 	isMaster: boolean;
 	isLightMaster: boolean;
 	isValidAsLightMaster: boolean;
@@ -184,5 +125,4 @@ export class PluginInterface extends NBindBase {
 	loadsArchive: boolean;
 }
 
-/** bool IsCompatible(uint32_t, uint32_t, uint32_t); */
 export function IsCompatible(major: number, minor: number, patch: number): boolean;

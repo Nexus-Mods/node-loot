@@ -1,20 +1,28 @@
 #pragma once
 
-#include <v8.h>
-#include <nan.h>
-
 #ifdef WIN32
 
-static std::wstring strerror(DWORD errorno);
+#include <windows.h>
+#include <exception>
+#include <napi.h>
+#include <loot/api.h>
 
-const char *translateCode(DWORD err);
+Napi::Error ErrnoException(Napi::Env &env
+                           , unsigned long lastError
+                           , const char *func = nullptr
+                           , const char* path = nullptr);
+Napi::Error ExcWrap(Napi::Env &env, const char *func, const std::exception &e);
 
-void setNodeErrorCode(v8::Local<v8::Context> context, v8::Local<v8::Object> err, DWORD errCode);
+Napi::Error UnsupportedGame(Napi::Env &env);
 
-v8::Local<v8::Value> WinApiException(v8::Local<v8::Context> context
-                                     , DWORD lastError
-                                     , const char *func = nullptr
-                                     , const char* path = nullptr);
+Napi::Error BusyException(Napi::Env &env);
+
+Napi::Error CyclicalInteractionException(Napi::Env &env, loot::CyclicInteractionError &err);
+
+Napi::Error InvalidParameter(Napi::Env &env, const char *func, const char *arg, const char *value);
+
+Napi::Error LOOTError(Napi::Env &env, const char *func, const char *what);
+
 
 #endif // WIN32
 
