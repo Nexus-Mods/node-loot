@@ -1,23 +1,24 @@
-const nbind = require('nbind');
 const net = require('net');
-const attachBindings = require('./bindings');
+
+function requireFirst(opts) {
+  for (let opt of opts) {
+    try {
+      const res = require(opt);
+      if (res !== undefined) {
+        return res;
+      }
+    } catch (err) {
+    }
+  }
+  throw new Error('not found: ' + possiblePaths.join(' or '));
+}
+
+const { Loot } = requireFirst(['./node-loot', './build/Release/node-loot']);
 
 process.on('uncaughtException', error => {
   console.error(error.message);
   process.exit(1);
 });
-
-let binding;
-try {
-  binding = nbind.init(`${__dirname}/loot`);
-} catch (err) {
-  // only happens during testing from node
-  binding = nbind.init();
-}
-
-attachBindings(binding);
-
-const lib = binding.lib;
 
 const client = net.connect(`\\\\?\\pipe\\loot-ipc-${process.argv[2]}`, (arg) => {
   let instance;
@@ -31,7 +32,7 @@ const client = net.connect(`\\\\?\\pipe\\loot-ipc-${process.argv[2]}`, (arg) => 
     try {
       if (event.type === 'init') {
         lib.SetErrorLanguageEN();
-        instance = new lib.Loot(...event.args, logCallback);
+        instance = new Loot(...event.args, logCallback);
       } else if (event.type === 'terminate') {
         send({});
         process.exit(0);

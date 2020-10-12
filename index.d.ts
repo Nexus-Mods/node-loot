@@ -24,7 +24,7 @@ export class Loot {
   loadLists(masterlistPath: string, userlistPath: string): void;
   loadPlugins(plugins: string[], loadHeadersOnly: boolean): void;
   getPlugin(pluginName: string): PluginInterface;
-  getPluginMetadata(pluginName: string): PluginMetadata;
+  getPluginMetadata(pluginName: string, includeUserMetadata: boolean = true, evaluateConditions: boolean = true): PluginMetadata;
   sortPlugins(pluginNames: string[]): string[];
   setLoadOrder(pluginNames: string[]): void;
   getLoadOrder(): string[];

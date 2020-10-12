@@ -15,4 +15,4 @@ std::wstring toWC(const char * const &source, CodePage codePage, size_t sourceLe
 
 std::string toMB(const wchar_t * const &source, CodePage codePage, size_t sourceLength);
 
-v8::Local<v8::String> operator "" _n(const char *input, size_t);
+std::wstring u8Tou16(const std::string &input);

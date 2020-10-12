@@ -75,4 +75,8 @@ std::string toMB(const wchar_t * const & source, CodePage codePage, size_t sourc
   return result;
 }
 
+std::wstring u8Tou16(const std::string & input) {
+  return toWC(input.c_str(), CodePage::UTF8, input.length());
+}
+
 #endif // WIN32

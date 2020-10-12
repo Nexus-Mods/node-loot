@@ -14,12 +14,7 @@
 #endif
 #include "string_cast.h"
 #include "util.h"
-
-template<typename T>
-Napi::Value toNAPI(Napi::Env &env, const T &input);
-
-template<typename T>
-T fromNAPI(const Napi::Value &info);
+#include "napi_helpers.h"
 
 template<>
 Napi::Value toNAPI<loot::Tag>(Napi::Env &env, const loot::Tag &input) {
@@ -30,16 +25,6 @@ Napi::Value toNAPI<loot::Tag>(Napi::Env &env, const loot::Tag &input) {
   res.Set("isConditional", input.IsConditional());
 
   return res;
-}
-
-template<typename T>
-Napi::Value toNAPI(Napi::Env &env, const std::vector<T> &input) {
-  Napi::Array result = Napi::Array::New(env, input.size());
-  uint32_t index = 0;
-  for (const auto &iter : input) {
-    result.Set(index++, toNAPI(env, iter));
-  }
-  return result;
 }
 
 template<>
@@ -119,34 +104,6 @@ Napi::Value toNAPI<loot::Group>(Napi::Env &env, const loot::Group &input) {
 }
 
 template<>
-Napi::Value toNAPI<std::string>(Napi::Env &env, const std::string &input) {
-  return Napi::String::From(env, input);
-}
-
-template<typename T>
-std::vector<T> fromNAPIArr(const Napi::Value &info) {
-  if (!info.IsArray()) {
-    throw std::runtime_error("expected array");
-  }
-
-  Napi::Object arr = info.ToObject();
-
-  std::vector<T> res;
-  for (uint32_t i = 0; ; ++i) {
-    if (arr.Get(i).IsUndefined()) {
-      break;
-    }
-    res.push_back(fromNAPI<T>(arr.Get(i)));
-  }
-  return res;
-}
-
-template<>
-std::string fromNAPI(const Napi::Value &info) {
-  return info.ToString().Utf8Value();
-}
-
-template<>
 loot::Group fromNAPI(const Napi::Value &info) {
   Napi::Object obj = info.As<Napi::Object>();
   return loot::Group(
@@ -175,15 +132,16 @@ loot::GameType convertGameId(Napi::Env &env, const std::string &gameId) {
   return iter->second;
 }
 
-std::wstring u8Tou16(const std::string &input) {
-  return toWC(input.c_str(), CodePage::UTF8, input.length());
-}
-
 Loot::Loot(const Napi::CallbackInfo &info)
   : Napi::ObjectWrap<Loot>(info)
-  , m_Language(info[3].ToString())
   , m_LogCallback(Napi::ThreadSafeFunction::New(info.Env(), info[4].As<Napi::Function>(), "logcb", 0, 1))
 {
+  std::string game, language;
+  std::wstring gamePath, gameLocalPath;
+  unpackArgs(info, game, gamePath, gameLocalPath, language);
+
+  m_Language = language;
+
   try {
     // logging is a bit complex I'm afraid because loot logs messages from different threads and we can only invoke
     // the js callback from the main process.
@@ -196,17 +154,12 @@ Loot::Loot(const Napi::CallbackInfo &info)
     };
 
     loot::SetLoggingCallback([&info, this, mainThreadCB](loot::LogLevel level, const char *message) {
-      // auto env = this->m_LogCallback.Env();
       auto data = new std::tuple(static_cast<int>(level), std::string(message));
       this->m_LogCallback.BlockingCall(data, mainThreadCB);
     });
 
 
-    auto gameId = convertGameId(info.Env(), info[0].ToString().Utf8Value());
-    std::wstring gamePath = u8Tou16(info[1].ToString().Utf8Value());
-    std::wstring gameLocalPath = u8Tou16(info[2].ToString().Utf8Value());
-    auto gamePathFS = std::filesystem::path(gamePath);
-    auto gameLocalPathFS = std::filesystem::path(gameLocalPath);
+    auto gameId = convertGameId(info.Env(), game);
     m_Game = loot::CreateGameHandle(gameId, gamePath, gameLocalPath);
   } catch (const std::filesystem::filesystem_error &e) {
     throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str());
@@ -220,9 +173,11 @@ Loot::Loot(const Napi::CallbackInfo &info)
 
 
 Napi::Value Loot::updateMasterlist(const Napi::CallbackInfo &info) {
+  std::string masterlistPath, repoUrl, repoBranch;
+  unpackArgs(info, masterlistPath, repoUrl, repoBranch);
 
   try {
-    bool res = m_Game->GetDatabase()->UpdateMasterlist(u8Tou16(info[0].ToString().Utf8Value()), info[1].ToString(), info[2].ToString());
+    bool res = m_Game->GetDatabase()->UpdateMasterlist(u8Tou16(masterlistPath), repoUrl, repoBranch);
     return Napi::Boolean::New(info.Env(), res);
   } catch (const std::filesystem::filesystem_error &e) {
     throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str());
@@ -231,10 +186,12 @@ Napi::Value Loot::updateMasterlist(const Napi::CallbackInfo &info) {
   }
 }
 
-Napi::Value Loot::loadLists(const Napi::CallbackInfo &info)
-{
+Napi::Value Loot::loadLists(const Napi::CallbackInfo &info) {
+  std::wstring masterlistPath, userlistPath;
+  unpackArgs(info, masterlistPath, userlistPath);
+
   try {
-    m_Game->GetDatabase()->LoadLists(u8Tou16(info[0].ToString().Utf8Value()), u8Tou16(info[1].ToString().Utf8Value()));
+    m_Game->GetDatabase()->LoadLists(masterlistPath, userlistPath);
   } catch (const std::filesystem::filesystem_error &e) {
     throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str());
   } catch (const std::exception &e) {
@@ -244,8 +201,12 @@ Napi::Value Loot::loadLists(const Napi::CallbackInfo &info)
 }
 
 Napi::Value Loot::loadPlugins(const Napi::CallbackInfo &info) {
+  std::vector<std::string> plugins;
+  bool headersOnly;
+  unpackArgs(info, plugins, headersOnly);
+
   try {
-    m_Game->LoadPlugins(fromNAPIArr<std::string>(info[0]), info[1].ToBoolean());
+    m_Game->LoadPlugins(plugins, headersOnly);
   } catch (const std::filesystem::filesystem_error &e) {
     throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str());
   } catch (const std::exception &e) {
@@ -255,10 +216,14 @@ Napi::Value Loot::loadPlugins(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value Loot::getPluginMetadata(const Napi::CallbackInfo &info) {
+  std::string pluginName;
+  bool includeUserMetadata = true, evaluateConditions = true;
+  unpackArgs<1>(info, pluginName, includeUserMetadata, evaluateConditions);
+
   try {
     Napi::Value res = Napi::Object::New(info.Env());
 
-    std::optional<loot::PluginMetadata> meta = m_Game->GetDatabase()->GetPluginMetadata(info[0].ToString(), true, true);
+    std::optional<loot::PluginMetadata> meta = m_Game->GetDatabase()->GetPluginMetadata(pluginName, includeUserMetadata, evaluateConditions);
     if (meta.has_value()) {
       // previously throw an exception here but this is *not* an error, it happens for all plugins
       // that have no data
@@ -285,8 +250,11 @@ Napi::Value Loot::getPluginMetadata(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value Loot::getPlugin(const Napi::CallbackInfo &info) {
+  std::string pluginName;
+  unpackArgs(info, pluginName);
+
   try {
-    auto plugin = m_Game->GetPlugin(info[0].ToString());
+    auto plugin = m_Game->GetPlugin(pluginName);
     if (plugin.get() == nullptr) {
       return info.Env().Undefined();
     }
@@ -315,10 +283,14 @@ Napi::Value Loot::getPlugin(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value Loot::getMasterlistRevision(const Napi::CallbackInfo &info) {
+  std::wstring masterlistPath;
+  bool getShortId;
+  unpackArgs(info, masterlistPath, getShortId);
+
   auto res = Napi::Object::New(info.Env());
 
   try {
-    auto rev = m_Game->GetDatabase()->GetMasterlistRevision(u8Tou16(info[0].ToString()), info[1].ToBoolean());
+    auto rev = m_Game->GetDatabase()->GetMasterlistRevision(masterlistPath, getShortId);
     res.Set("isModified", rev.is_modified);
     res.Set("revisionDate", rev.revision_date);
     res.Set("revisionId", rev.revision_id);
@@ -331,8 +303,11 @@ Napi::Value Loot::getMasterlistRevision(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value Loot::sortPlugins(const Napi::CallbackInfo &info) {
+  std::vector<std::string> plugins;
+  unpackArgs(info, plugins);
+
   try {
-    return toNAPI(info.Env(), m_Game->SortPlugins(fromNAPIArr<std::string>(info[0].As<Napi::Array>())));
+    return toNAPI(info.Env(), m_Game->SortPlugins(plugins));
   } catch (loot::CyclicInteractionError &e) {
     throw CyclicalInteractionException(info.Env(), e);
   } catch (const std::filesystem::filesystem_error &e) {
@@ -343,8 +318,11 @@ Napi::Value Loot::sortPlugins(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value Loot::setLoadOrder(const Napi::CallbackInfo &info) {
+  std::vector<std::string> plugins;
+  unpackArgs(info, plugins);
+
   try {
-    m_Game->SetLoadOrder(fromNAPIArr<std::string>(info[0].As<Napi::Array>()));
+    m_Game->SetLoadOrder(plugins);
     return info.Env().Undefined();
   } catch (const std::exception &e) {
     throw LOOTError(info.Env(), "setLoadOrder", e.what());
@@ -369,16 +347,22 @@ Napi::Value Loot::loadCurrentLoadOrderState(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value Loot::isPluginActive(const Napi::CallbackInfo &info) {
+  std::string pluginName;
+  unpackArgs(info, pluginName);
+
   try {
-    return Napi::Boolean::New(info.Env(), m_Game->IsPluginActive(info[0].ToString()));
+    return Napi::Boolean::New(info.Env(), m_Game->IsPluginActive(pluginName));
   } catch (const std::exception &e) {
     throw LOOTError(info.Env(), "isPluginActive", e.what());
   }
 }
 
 Napi::Value Loot::getGroups(const Napi::CallbackInfo &info) {
+  bool includeUserGroups;
+  unpackArgs(info, includeUserGroups);
+
   try {
-    return toNAPI(info.Env(), m_Game->GetDatabase()->GetGroups(info[0].ToBoolean()));
+    return toNAPI(info.Env(), m_Game->GetDatabase()->GetGroups(includeUserGroups));
   } catch (const std::exception &e) {
     throw LOOTError(info.Env(), "getGroups", e.what());
   }
@@ -393,8 +377,11 @@ Napi::Value Loot::getUserGroups(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value Loot::setUserGroups(const Napi::CallbackInfo &info) {
+  std::vector<loot::Group> groups;
+  unpackArgs(info, groups);
+
   try {
-    m_Game->GetDatabase()->SetUserGroups(fromNAPIArr<loot::Group>(info[0]));
+    m_Game->GetDatabase()->SetUserGroups(groups);
     return info.Env().Undefined();
   } catch (const std::exception &e) {
     throw LOOTError(info.Env(), "setUserGroups", e.what());
@@ -402,39 +389,49 @@ Napi::Value Loot::setUserGroups(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value Loot::getGroupsPath(const Napi::CallbackInfo &info) {
+  std::string fromGroupName, toGroupName;
+  unpackArgs(info, fromGroupName, toGroupName);
+
   try {
-    return toNAPI(info.Env(), m_Game->GetDatabase()->GetGroupsPath(info[0].ToString(), info[1].ToString()));
+    return toNAPI(info.Env(), m_Game->GetDatabase()->GetGroupsPath(fromGroupName, toGroupName));
   } catch (const std::exception &e) {
     throw LOOTError(info.Env(), "getGroupsPath", e.what());
   }
 }
 
 Napi::Value Loot::getGeneralMessages(const Napi::CallbackInfo &info) {
+  bool evaluateConditions;
+  unpackArgs(info, evaluateConditions);
+
   try {
-    return toNAPI(info.Env(), m_Game->GetDatabase()->GetGeneralMessages(info[0].ToBoolean()));
+    return toNAPI(info.Env(), m_Game->GetDatabase()->GetGeneralMessages(evaluateConditions));
   } catch (const std::exception &e) {
     throw LOOTError(info.Env(), "getGeneralMessages", e.what());
   }
 }
 
-void SetErrorLanguageEN() {
+Napi::Value SetErrorLanguageEN(const Napi::CallbackInfo &info) {
 #ifdef WIN32
   ULONG count = 1;
   WCHAR wszLanguages[32];
   wsprintfW(wszLanguages, L"%04X%c", MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT), 0);
   SetProcessPreferredUILanguages(MUI_LANGUAGE_ID, wszLanguages, &count);
 #endif
+  return info.Env().Undefined();
 }
 
 Napi::Boolean IsCompatible(const Napi::CallbackInfo &info) {
-  return Napi::Boolean::New(info.Env(), loot::IsCompatible(info[0].ToNumber().Int32Value(), info[1].ToNumber().Int32Value(), info[2].ToNumber().Int32Value()));
+  int major, minor, patch;
+  unpackArgs(info, major, minor, patch);
+
+  return Napi::Boolean::New(info.Env(), loot::IsCompatible(major, minor, patch));
 }
 
 Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
+  exports.Set("SetErrorLanguageEN", Napi::Function::New(env, SetErrorLanguageEN));
   exports.Set("IsCompatible", Napi::Function::New(env, IsCompatible));
   Loot::Init(env, exports);
   return exports;
 }
 
 NODE_API_MODULE(loot, InitAll)
-

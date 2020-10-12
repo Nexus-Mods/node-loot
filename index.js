@@ -1,7 +1,25 @@
 net = require('net');
 const path = require('path');
 
-const { Loot, IsCompatible } = require('./build/Release/node-loot');
+const possiblePaths = [
+  './node-loot',
+  './build/Release/node-loot'
+];
+
+function requireFirst(opts) {
+  for (let opt of opts) {
+    try {
+      const res = require(opt);
+      if (res !== undefined) {
+        return res;
+      }
+    } catch (err) {
+    }
+  }
+  throw new Error('not found: ' + possiblePaths.join(' or '));
+}
+
+const { Loot, IsCompatible } = requireFirst(['./node-loot', './build/Release/node-loot']);
 
 // in electron renderer thread we have native webworkers,
 // otherwise we need a module
@@ -31,6 +49,7 @@ class LootAsync {
         if (err !== null) {
           callback(err);
         } else {
+          console.log('created', res);
           callback(null, res);
         }
       });
@@ -43,7 +62,17 @@ class LootAsync {
     this.queue = [];
     this.logCallback = logCallback;
     this.didClose = false;
-    this.onFork = onFork;
+    if (onFork !== undefined) {
+      this.onFork = onFork;
+    } else {
+      const cp = require('child_process');
+      this.onFork = (script, args) => {
+        cp.spawn(process.execPath, [
+          script,
+          ...args,
+        ]);
+      }
+    }
     this.initArgs = [
       gameId,
       gamePath,
