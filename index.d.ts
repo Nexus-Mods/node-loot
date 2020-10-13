@@ -48,6 +48,7 @@ export class LootAsync {
   loadPlugins(plugins: string[], loadHeadersOnly: boolean): void;
   getPlugin(pluginName: string): PluginInterface;
   getPluginMetadata(pluginName: string, callback: (err: Error, meta: PluginMetadata) => void): void;
+  getPluginMetadata(pluginName: string, includeUserMetadata: boolean, evaluateConditions: boolean, callback: (err: Error, meta: PluginMetadata) => void): void;
   sortPlugins(pluginNames: string[], callback: (err: Error, sorted: string[]) => void): void;
   setLoadOrder(pluginNames: string[]): void;
   getLoadOrder(): string[];
@@ -67,9 +68,10 @@ export class MasterlistInfo {
 }
 
 export class Message {
-	value(language: string): string;
-
 	type: number;
+	content: string | Array<{ text: string, language: string }>;
+	condition: string;
+	isConditional: boolean;
 }
 
 export class MessageContent {

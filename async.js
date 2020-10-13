@@ -1,19 +1,6 @@
 const net = require('net');
 
-function requireFirst(opts) {
-  for (let opt of opts) {
-    try {
-      const res = require(opt);
-      if (res !== undefined) {
-        return res;
-      }
-    } catch (err) {
-    }
-  }
-  throw new Error('not found: ' + possiblePaths.join(' or '));
-}
-
-const { Loot } = requireFirst(['./node-loot', './build/Release/node-loot']);
+const { Loot, SetErrorLanguageEN } = require('./build/Release/node-loot');
 
 process.on('uncaughtException', error => {
   console.error(error.message);
@@ -24,14 +11,14 @@ const client = net.connect(`\\\\?\\pipe\\loot-ipc-${process.argv[2]}`, (arg) => 
   let instance;
 
   function send(args) {
-    client.write(JSON.stringify(args));
+    client.write(JSON.stringify(args) + '\uFFFF');
   }
 
   function handleEvent(event) {
     let result;
     try {
       if (event.type === 'init') {
-        lib.SetErrorLanguageEN();
+        SetErrorLanguageEN();
         instance = new Loot(...event.args, logCallback);
       } else if (event.type === 'terminate') {
         send({});

@@ -1,28 +1,7 @@
 net = require('net');
 const path = require('path');
 
-const possiblePaths = [
-  './node-loot',
-  './build/Release/node-loot'
-];
-
-function requireFirst(opts) {
-  for (let opt of opts) {
-    try {
-      const res = require(opt);
-      if (res !== undefined) {
-        return res;
-      }
-    } catch (err) {
-    }
-  }
-  throw new Error('not found: ' + possiblePaths.join(' or '));
-}
-
-const { Loot, IsCompatible } = requireFirst(['./node-loot', './build/Release/node-loot']);
-
-// in electron renderer thread we have native webworkers,
-// otherwise we need a module
+const { Loot, IsCompatible } = require('./build/Release/node-loot');
 
 class AlreadyClosed extends Error {
   constructor() {
@@ -115,7 +94,12 @@ class LootAsync {
           this.socket = socket;
           socket
           .on('data', data => {
-            this.handleResponse(JSON.parse(data.toString()));
+            try {
+              const messages = data.toString().split('\uFFFF').filter(msg => msg.length > 0);
+              messages.forEach(msg => this.handleResponse(JSON.parse(msg)));
+            } catch (err) {
+              this.logCallback(4, err.message);
+            }
           })
           .on('error', err => {
             if (this.currentCallback !== undefined) {
