@@ -28,7 +28,6 @@ class LootAsync {
         if (err !== null) {
           callback(err);
         } else {
-          console.log('created', res);
           callback(null, res);
         }
       });
