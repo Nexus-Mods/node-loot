@@ -21,7 +21,7 @@ export class Loot {
   
   updateMasterlist(masterlistPath: string, repoUrl: string, repoBranch: string): boolean;
   getMasterlistRevision(masterlistPath: string, getShortId: boolean): MasterlistInfo;
-  loadLists(masterlistPath: string, userlistPath: string): void;
+  loadLists(masterlistPath: string, userlistPath: string, preludePath: string): void;
   loadPlugins(plugins: string[], loadHeadersOnly: boolean): void;
   getPlugin(pluginName: string): PluginInterface;
   getPluginMetadata(pluginName: string, includeUserMetadata: boolean, evaluateConditions: boolean): PluginMetadata;
@@ -44,7 +44,7 @@ export class LootAsync {
 
   updateMasterlist(masterlistPath: string, repoUrl: string, repoBranch: string, callback: (err: Error, didUpdate: boolean) => void): void;
   getMasterlistRevision(masterlistPath: string, getShortId: boolean, callback: (err: Error, info: MasterlistInfo) => void): void;
-  loadLists(masterlistPath: string, userlistPath: string, callback: (err: Error) => void): void;
+  loadLists(masterlistPath: string, userlistPath: string, preludePath: string, callback: (err: Error) => void): void;
   loadPlugins(plugins: string[], loadHeadersOnly: boolean): void;
   getPlugin(pluginName: string): PluginInterface;
   getPluginMetadata(pluginName: string, callback: (err: Error, meta: PluginMetadata) => void): void;

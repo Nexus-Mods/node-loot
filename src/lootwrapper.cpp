@@ -187,12 +187,12 @@ Napi::Value Loot::updateMasterlist(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value Loot::loadLists(const Napi::CallbackInfo &info) {
-  std::wstring masterlistPath, userlistPath;
-  unpackArgs(info, masterlistPath, userlistPath);
+  std::wstring masterlistPath, userlistPath, preludePath;
+  unpackArgs(info, masterlistPath, userlistPath, preludePath);
 
   try {
     auto db = m_Game->GetDatabase();
-    db->LoadLists(masterlistPath, userlistPath);
+    db->LoadLists(masterlistPath, userlistPath, preludePath);
     // m_Game->GetDatabase()->LoadLists(masterlistPath, userlistPath);
   } catch (const std::filesystem::filesystem_error &e) {
     throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str());

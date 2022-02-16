@@ -1,0 +1,30 @@
+groups:
+  - name: 'default'
+    after:
+      - foobar5
+  - name: 'foobar1'
+    after:
+      - Early Loaders
+  - name: 'foobar2'
+    after:
+      - foobar1
+  - name: 'foobar3'
+    after:
+      - foobar2
+  - name: 'foobar4'
+    after:
+      - foobar3
+  - name: 'foobar5'
+    after:
+      - foobar4
+plugins:
+  - name: 'dummy.esl'
+    after:
+      - 'ClimatesOfTamriel.esm'
+  - name: 'FNIS.esp'
+    after:
+      - name: 'TKDodge.esp'
+        display: 'TK Dodge'
+  - name: 'SkyHUD.esp'
+    after:
+      - 'HearthfireMultiKid.esp'
