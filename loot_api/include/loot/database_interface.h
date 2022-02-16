@@ -33,7 +33,7 @@
 #include "loot/metadata/group.h"
 #include "loot/metadata/message.h"
 #include "loot/metadata/plugin_metadata.h"
-#include "loot/struct/masterlist_info.h"
+#include "loot/struct/file_revision.h"
 #include "loot/struct/simple_message.h"
 
 namespace loot {
@@ -46,7 +46,8 @@ public:
    */
 
   /**
-   *  @brief Loads the masterlist and userlist from the paths specified.
+   *  @brief Loads the masterlist, userlist and masterlist prelude from the
+   *         paths specified.
    *  @details Can be called multiple times, each time replacing the
    *           previously-loaded data.
    *  @param masterlist_path
@@ -56,9 +57,14 @@ public:
    *         The relative or absolute path to the userlist file that should be
    *         loaded, or an empty path. If an empty path, no userlist will be
    *         loaded.
+   *  @param masterlist_prelude_path
+   *         The relative or absolute path to the masterlist prelude file that
+   *         should be loaded. If an empty path, no masterlist prelude will be
+   *         loaded.
    */
   virtual void LoadLists(const std::filesystem::path& masterlist_path,
-                         const std::filesystem::path& userlist_path = "") = 0;
+                         const std::filesystem::path& userlist_path = "",
+                         const std::filesystem::path& masterlist_prelude_path = "") = 0;
 
   /**
    * Writes a metadata file containing all loaded user-added metadata.
@@ -83,80 +89,6 @@ public:
    */
   virtual void WriteMinimalList(const std::filesystem::path& outputFile,
                                 const bool overwrite) const = 0;
-
-  /**
-   *  @}
-   *  @name Masterlist Update
-   *  @{
-   */
-
-  /**
-   *  @brief Update the given masterlist.
-   *  @details Uses Git to update the given masterlist to a given remote.
-   *           If the masterlist doesn't exist, this will create it. This
-   *           function also initialises a Git repository in the given
-   *           masterlist's parent folder. If the masterlist was not already
-   *           up-to-date, it will be re-loaded, but not re-evaluated.
-   *
-   *           If a Git repository is already present, it will be used to
-   *           perform a diff-only update, but if for any reason a
-   *           fast-forward merge update is not possible, the existing
-   *           repository will be deleted and a new repository cloned from
-   *           the given remote.
-   *  @param masterlist_path
-   *         The relative or absolute path to the masterlist file that should be
-   *         updated. The filename must match the filename of the masterlist
-   *         file in the given remote repository, otherwise it will not be
-   *         updated correctly. Although LOOT itself expects this filename to be
-   *         "masterlist.yaml", the API does not check for any specific
-   *         filename.
-   *  @param remote_url
-   *         The URL of the remote from which to fetch updates. This can also be
-   *         a relative or absolute path to a local repository.
-   *  @param remote_branch
-   *         The branch of the remote from which to apply updates. LOOT's
-   *         official masterlists are versioned using separate branches for each
-   *         new version of the masterlist syntax, so if you're using them,
-   *         check their repositories to see which is the latest release branch.
-   *  @returns `true` if the masterlist was updated. `false` if no update was
-   *           necessary, ie. it was already up-to-date. If `true`, the
-   *           masterlist will have been re-loaded, but will need to be
-   *           re-evaluated separately.
-   */
-  virtual bool UpdateMasterlist(const std::filesystem::path& masterlist_path,
-                                const std::string& remote_url,
-                                const std::string& remote_branch) = 0;
-
-  /**
-   *  @brief Get the given masterlist's revision.
-   *  @details Getting a masterlist's revision is only possible if it is found
-   *           inside a local Git repository.
-   *  @param masterlist_path
-   *         The relative or absolute path to the masterlist file that should be
-   *         queried.
-   *  @param get_short_id
-   *         If `true`, the shortest unique hexadecimal revision hash that is at
-   *         least 7 characters long will be outputted. Otherwise, the full 40
-   *         character hash will be outputted.
-   *  @returns The revision data.
-   */
-  virtual MasterlistInfo GetMasterlistRevision(
-      const std::filesystem::path& masterlist_path,
-      const bool get_short_id) const = 0;
-
-  /**
-   * Check if the given masterlist is the latest available for a given branch.
-   * @param  masterlist_path
-   *         The relative or absolute path to the masterlist file for which the
-   *         latest revision should be obtained. It needs to be in a local Git
-   *         repository.
-   * @param  branch
-   *         The branch to check against.
-   * @return True if the masterlist revision matches the latest masterlist
-   *         revision for the given branch, and false otherwise.
-   */
-  virtual bool IsLatestMasterlist(const std::filesystem::path& masterlist_path,
-                                  const std::string& branch) const = 0;
 
   /**
    *  @}
@@ -229,9 +161,6 @@ public:
   virtual std::vector<Vertex> GetGroupsPath(
       const std::string& fromGroupName,
       const std::string& toGroupName) const = 0;
-
-  /**
-   * @brief Set the groups
 
   /**
    *  @}

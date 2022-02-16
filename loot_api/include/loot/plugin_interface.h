@@ -48,10 +48,10 @@ public:
   /**
    * Get the value of the version field in the HEDR subrecord of the plugin's
    * TES4 record.
-   * @return The value of the version field, or NaN if the field could not be
-   *         found.
+   * @return The value of the version field, or an empty optional if that value
+   *         is NaN or could not be found.
    */
-  virtual float GetHeaderVersion() const = 0;
+  virtual std::optional<float> GetHeaderVersion() const = 0;
 
   /**
    * Get the plugin's version number from its description field.
@@ -93,29 +93,13 @@ public:
   /**
    * Check if the plugin is a light plugin.
    * @return True if plugin is a light plugin, false otherwise.
-   * @deprecated Use IsLightPlugin() instead.
-   */
-  [[deprecated("Use IsLightPlugin() instead.")]]
-  virtual bool IsLightMaster() const = 0;
-
-  /**
-   * Check if the plugin is a light plugin.
-   * @return True if plugin is a light plugin, false otherwise.
    */
   virtual bool IsLightPlugin() const = 0;
 
   /**
-   * Check if the plugin is or would be valid as a light master.
-   * @return True if the plugin is a valid light master or would be a valid
-   *         light master, false otherwise.
-   */
-  [[deprecated("Use IsValidAsLightPlugin() instead.")]]
-  virtual bool IsValidAsLightMaster() const = 0;
-
-  /**
-   * Check if the plugin is or would be valid as a light master.
-   * @return True if the plugin is a valid light master or would be a valid
-   *         light master, false otherwise.
+   * Check if the plugin is or would be valid as a light plugin.
+   * @return True if the plugin is a valid light plugin or would be a valid
+   *         light plugin, false otherwise.
    */
   virtual bool IsValidAsLightPlugin() const = 0;
 

@@ -55,7 +55,7 @@ Napi::Value toNAPI<loot::PluginCleaningData>(Napi::Env &env, const loot::PluginC
   res.Set("crc", input.GetCRC());
   res.Set("deletedNavmeshCount", input.GetDeletedNavmeshCount());
   res.Set("deletedReferenceCount", input.GetDeletedReferenceCount());
-  res.Set("info", toNAPI(env, input.GetInfo()));
+  // res.Set("info", toNAPI(env, input.GetInfo()));
   res.Set("itmCount", input.GetITMCount());
 
   return res;
@@ -160,7 +160,7 @@ Loot::Loot(const Napi::CallbackInfo &info)
 
 
     auto gameId = convertGameId(info.Env(), game);
-    m_Game = loot::CreateGameHandle(gameId, gamePath, gameLocalPath);
+    m_Game = loot::CreateGameHandle(gameId, std::filesystem::path(gamePath), std::filesystem::path(gameLocalPath));
   } catch (const std::filesystem::filesystem_error &e) {
     throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str());
   } catch (const std::exception &e) {
@@ -177,7 +177,7 @@ Napi::Value Loot::updateMasterlist(const Napi::CallbackInfo &info) {
   unpackArgs(info, masterlistPath, repoUrl, repoBranch);
 
   try {
-    bool res = m_Game->GetDatabase()->UpdateMasterlist(u8Tou16(masterlistPath), repoUrl, repoBranch);
+    bool res = loot::UpdateFile(u8Tou16(masterlistPath), repoUrl, repoBranch);
     return Napi::Boolean::New(info.Env(), res);
   } catch (const std::filesystem::filesystem_error &e) {
     throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str());
@@ -191,7 +191,9 @@ Napi::Value Loot::loadLists(const Napi::CallbackInfo &info) {
   unpackArgs(info, masterlistPath, userlistPath);
 
   try {
-    m_Game->GetDatabase()->LoadLists(masterlistPath, userlistPath);
+    auto db = m_Game->GetDatabase();
+    db->LoadLists(masterlistPath, userlistPath);
+    // m_Game->GetDatabase()->LoadLists(masterlistPath, userlistPath);
   } catch (const std::filesystem::filesystem_error &e) {
     throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str());
   } catch (const std::exception &e) {
@@ -263,15 +265,16 @@ Napi::Value Loot::getPlugin(const Napi::CallbackInfo &info) {
     res.Set("bashTags", toNAPI(info.Env(), plugin->GetBashTags()));
     auto crc = plugin->GetCRC();
     res.Set("crc", crc.has_value() ? Napi::Value::From(info.Env(), crc.value()) : info.Env().Null());
-    res.Set("headerVersion", plugin->GetHeaderVersion());
+    auto headerVersion = plugin->GetHeaderVersion();
+    res.Set("headerVersion", headerVersion.has_value() ? Napi::Value::From(info.Env(), headerVersion.value()) : info.Env().Null());
     res.Set("masters", toNAPI(info.Env(), plugin->GetMasters()));
     res.Set("name", plugin->GetName());
     auto version = plugin->GetVersion();
     res.Set("version", version.has_value() ? Napi::Value::From(info.Env(), version.value()) : (info.Env().Null()));
     res.Set("isEmpty", plugin->IsEmpty());
-    res.Set("isLightMaster", plugin->IsLightMaster());
+    res.Set("isLightPlugin", plugin->IsLightPlugin());
     res.Set("isMaster", plugin->IsMaster());
-    res.Set("isValidAsLightMaster", plugin->IsValidAsLightMaster());
+    res.Set("isValidAsLightPlugin", plugin->IsValidAsLightPlugin());
     res.Set("loadsArchive", plugin->LoadsArchive());
     return res;
   } catch (const std::filesystem::filesystem_error &e) {
@@ -290,10 +293,10 @@ Napi::Value Loot::getMasterlistRevision(const Napi::CallbackInfo &info) {
   auto res = Napi::Object::New(info.Env());
 
   try {
-    auto rev = m_Game->GetDatabase()->GetMasterlistRevision(masterlistPath, getShortId);
+    loot::FileRevision rev = loot::GetFileRevision(masterlistPath, getShortId);
     res.Set("isModified", rev.is_modified);
-    res.Set("revisionDate", rev.revision_date);
-    res.Set("revisionId", rev.revision_id);
+    res.Set("revisionDate", rev.date);
+    res.Set("revisionId", rev.id);
   } catch (const std::filesystem::filesystem_error &e) {
     throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str());
   } catch (const std::exception &e) {
