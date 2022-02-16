@@ -16,7 +16,7 @@ public:
 
   static Napi::Object Init(Napi::Env env, Napi::Object exports) {
     Napi::Function func = DefineClass(env, "Loot", {
-      InstanceMethod("updateMasterlist", &Loot::updateMasterlist),
+      InstanceMethod("updateFile", &Loot::updateFile),
       InstanceMethod("loadLists", &Loot::loadLists),
       InstanceMethod("loadPlugins", &Loot::loadPlugins),
       InstanceMethod("loadCurrentLoadOrderState", &Loot::loadCurrentLoadOrderState),
@@ -39,7 +39,7 @@ public:
 
   Loot(const Napi::CallbackInfo &info);
 
-  Napi::Value updateMasterlist(const Napi::CallbackInfo &info);
+  Napi::Value updateFile(const Napi::CallbackInfo &info);
 
   Napi::Value loadLists(const Napi::CallbackInfo &info);
 

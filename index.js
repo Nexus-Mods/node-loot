@@ -66,7 +66,7 @@ class LootAsync {
       callback(err);
     }
 
-    this.makeProxy('updateMasterlist');
+    this.makeProxy('updateFile');
     this.makeProxy('getMasterlistRevision');
     this.makeProxy('loadLists');
     this.makeProxy('loadPlugins');

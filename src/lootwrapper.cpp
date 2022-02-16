@@ -172,7 +172,7 @@ Loot::Loot(const Napi::CallbackInfo &info)
 }
 
 
-Napi::Value Loot::updateMasterlist(const Napi::CallbackInfo &info) {
+Napi::Value Loot::updateFile(const Napi::CallbackInfo &info) {
   std::string masterlistPath, repoUrl, repoBranch;
   unpackArgs(info, masterlistPath, repoUrl, repoBranch);
 
@@ -182,7 +182,7 @@ Napi::Value Loot::updateMasterlist(const Napi::CallbackInfo &info) {
   } catch (const std::filesystem::filesystem_error &e) {
     throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str());
   } catch (const std::exception &e) {
-    throw LOOTError(info.Env(), "updateMasterlist", e.what());
+    throw LOOTError(info.Env(), "updateFile", e.what());
   }
 }
 
