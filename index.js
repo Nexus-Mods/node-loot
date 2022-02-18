@@ -101,7 +101,7 @@ class LootAsync {
             }
           })
           .on('error', err => {
-            if (this.currentCallback !== undefined) {
+            if (!!this.currentCallback) {
               this.currentCallback(err);
               this.currentCallback = undefined;
             } else {
@@ -203,7 +203,7 @@ class LootAsync {
       const next = this.queue.shift();
       this.deliver(next.message, next.callback);
     } else {
-      this.currentCallback = null;
+      this.currentCallback = undefined;
     }
   }
 
