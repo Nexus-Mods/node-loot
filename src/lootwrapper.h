@@ -16,11 +16,9 @@ public:
 
   static Napi::Object Init(Napi::Env env, Napi::Object exports) {
     Napi::Function func = DefineClass(env, "Loot", {
-      InstanceMethod("updateFile", &Loot::updateFile),
       InstanceMethod("loadLists", &Loot::loadLists),
       InstanceMethod("loadPlugins", &Loot::loadPlugins),
       InstanceMethod("loadCurrentLoadOrderState", &Loot::loadCurrentLoadOrderState),
-      InstanceMethod("getMasterlistRevision", &Loot::getMasterlistRevision),
       InstanceMethod("getPlugin", &Loot::getPlugin),
       InstanceMethod("getPluginMetadata", &Loot::getPluginMetadata),
       InstanceMethod("getLoadOrder", &Loot::getLoadOrder),
@@ -39,15 +37,11 @@ public:
 
   Loot(const Napi::CallbackInfo &info);
 
-  Napi::Value updateFile(const Napi::CallbackInfo &info);
-
   Napi::Value loadLists(const Napi::CallbackInfo &info);
 
   Napi::Value loadPlugins(const Napi::CallbackInfo &info);
 
   Napi::Value loadCurrentLoadOrderState(const Napi::CallbackInfo &info);
-
-  Napi::Value getMasterlistRevision(const Napi::CallbackInfo &info);
 
   Napi::Value getPlugin(const Napi::CallbackInfo &info);
 
@@ -74,7 +68,7 @@ public:
 private:
 
   std::string m_Language;
-  std::shared_ptr<loot::GameInterface> m_Game;
+  std::unique_ptr<loot::GameInterface> m_Game;
   Napi::ThreadSafeFunction m_LogCallback;
 
 };

@@ -40,7 +40,7 @@ public:
    * an empty condition string.
    * @return A Tag object.
    */
-  LOOT_API explicit Tag();
+  LOOT_API explicit Tag() = default;
 
   /**
    * Construct a Tag object with the given name, for addition or removal, with
@@ -58,19 +58,6 @@ public:
                         const std::string& condition = "");
 
   /**
-   * A less-than operator implemented with no semantics so that Tag objects
-   * can be stored in sets.
-   * @returns True if this Tag is less than the given Tag, false otherwise.
-   */
-  LOOT_API bool operator<(const Tag& rhs) const;
-
-  /**
-   * Check if two Tag objects are equal.
-   * @returns True if the objects' fields are equal, false otherwise.
-   */
-  LOOT_API bool operator==(const Tag& rhs) const;
-
-  /**
    * Check if the tag should be added.
    * @return True if the tag should be added, false if it should be removed.
    */
@@ -84,8 +71,14 @@ public:
 
 private:
   std::string name_;
-  bool addTag_;
+  bool addTag_{true};
 };
+
+/**
+ * Check if two Tag objects are equal.
+ * @returns True if the objects' fields are equal, false otherwise.
+ */
+LOOT_API bool operator==(const Tag& lhs, const Tag& rhs);
 
 /**
  * Check if two Tag objects are not equal.
@@ -94,16 +87,23 @@ private:
 LOOT_API bool operator!=(const Tag& lhs, const Tag& rhs);
 
 /**
+ * A less-than operator implemented with no semantics so that Tag objects
+ * can be stored in sets.
+ * @returns True if the first Tag is less than the second Tag, false otherwise.
+ */
+LOOT_API bool operator<(const Tag& lhs, const Tag& rhs);
+
+/**
  * Check if the first Tag object is greater than the second Tag object.
- * @returns True if the second Tag object is less than the first Tag object, 
+ * @returns True if the second Tag object is less than the first Tag object,
  *          false otherwise.
  */
 LOOT_API bool operator>(const Tag& lhs, const Tag& rhs);
 
 /**
- * Check if the first Tag object is less than or equal to the second Tag 
+ * Check if the first Tag object is less than or equal to the second Tag
  * object.
- * @returns True if the first Tag object is not greater than the second Tag 
+ * @returns True if the first Tag object is not greater than the second Tag
  *          object, false otherwise.
  */
 LOOT_API bool operator<=(const Tag& lhs, const Tag& rhs);
@@ -111,7 +111,7 @@ LOOT_API bool operator<=(const Tag& lhs, const Tag& rhs);
 /**
  * Check if the first Tag object is greater than or equal to the second Tag
  * object.
- * @returns True if the first Tag object is not less than the second Tag 
+ * @returns True if the first Tag object is not less than the second Tag
  *          object, false otherwise.
  */
 LOOT_API bool operator>=(const Tag& lhs, const Tag& rhs);

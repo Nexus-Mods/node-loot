@@ -49,7 +49,7 @@ public:
    * Construct a PluginMetadata object with a blank plugin name and no metadata.
    * @return A PluginMetadata object.
    */
-  LOOT_API explicit PluginMetadata();
+  LOOT_API PluginMetadata() = default;
 
   /**
    * Construct a PluginMetadata object with no metadata for a plugin with the
@@ -70,17 +70,6 @@ public:
    *        The plugin metadata to merge.
    */
   LOOT_API void MergeMetadata(const PluginMetadata& plugin);
-
-  /**
-   * Get metadata in this object that isn't present in the given PluginMetadata
-   * object.
-   * @param  plugin
-   *         The PluginMetadata object to compare against.
-   * @return A PluginMetadata object containing the metadata in this object that
-   *         is not in the given object. The returned object inherits this
-   *         object's group.
-   */
-  LOOT_API PluginMetadata NewMetadata(const PluginMetadata& plugin) const;
 
   /**
    * Get the plugin name.
@@ -143,15 +132,6 @@ public:
    * @return The locations at which this plugin can be found.
    */
   LOOT_API std::vector<Location> GetLocations() const;
-
-  /**
-   * Get the plugin's messages as SimpleMessage objects for the given language.
-   * @param language
-   *        The language to create the SimpleMessage objects for.
-   * @return The plugin's messages as SimpleMessage objects.
-   */
-  LOOT_API std::vector<SimpleMessage> GetSimpleMessages(
-      const std::string& language) const;
 
   /**
    * Set the plugin's group.
@@ -257,6 +237,8 @@ public:
 
 private:
   std::string name_;
+  std::optional<std::regex> nameRegex_;
+
   std::optional<std::string> group_;
   std::vector<File> loadAfter_;
   std::vector<File> requirements_;

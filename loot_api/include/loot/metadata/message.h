@@ -44,7 +44,7 @@ public:
    * strings.
    * @return A Message object.
    */
-  LOOT_API explicit Message();
+  LOOT_API Message() = default;
 
   /**
    * Construct a Message object with the given type, English content and
@@ -58,8 +58,8 @@ public:
    * @return A Message object.
    */
   LOOT_API explicit Message(const MessageType type,
-                   const std::string& content,
-                   const std::string& condition = "");
+                            const std::string& content,
+                            const std::string& condition = "");
 
   /**
    * Construct a Message object with the given type, content and condition
@@ -73,8 +73,8 @@ public:
    * @return A Message object.
    */
   LOOT_API explicit Message(const MessageType type,
-                   const std::vector<MessageContent>& content,
-                   const std::string& condition = "");
+                            const std::vector<MessageContent>& content,
+                            const std::string& condition = "");
 
   /**
    * Construct a Message object from a SimpleMessage object.
@@ -83,20 +83,6 @@ public:
    * @return A Message object.
    */
   LOOT_API explicit Message(const SimpleMessage& message);
-
-  /**
-   * A less-than operator implemented with no semantics so that Message objects
-   * can be stored in sets.
-   * @returns Returns true if this Message is less than the given Message, and
-   *          false otherwise.
-   */
-  LOOT_API bool operator<(const Message& rhs) const;
-
-  /**
-   * Check if two Message objects are equal by comparing their fields.
-   * @returns True if the objects' fields are equal, false otherwise.
-   */
-  LOOT_API bool operator==(const Message& rhs) const;
 
   /**
    * Get the message type.
@@ -110,34 +96,30 @@ public:
    */
   LOOT_API std::vector<MessageContent> GetContent() const;
 
-  /**
-   * Get the message content given a language.
-   * @param  language
-   *         The preferred language for the message content.
-   * @return A MessageContent object for the preferred language, or for English
-   *         if a MessageContent object is not available for the given language.
-   */
-  LOOT_API std::optional<MessageContent> GetContent(const std::string& language) const;
-
-  /**
-   * Get the message as a SimpleMessage given a language.
-   * @param  language
-   *         The preferred language for the message content.
-   * @return A SimpleMessage object for the preferred language, or for English
-   *         if message text is not available for the given language.
-   */
-  LOOT_API std::optional<SimpleMessage> ToSimpleMessage(const std::string& language) const;
-
 private:
-  MessageType type_;
+  MessageType type_{MessageType::say};
   std::vector<MessageContent> content_;
 };
+
+/**
+ * Check if two Message objects are equal by comparing their fields.
+ * @returns True if the objects' fields are equal, false otherwise.
+ */
+LOOT_API bool operator==(const Message& lhs, const Message& rhs);
 
 /**
  * Check if two Message objects are not equal.
  * @returns True if the Message objects are not equal, false otherwise.
  */
 LOOT_API bool operator!=(const Message& lhs, const Message& rhs);
+
+/**
+ * A less-than operator implemented with no semantics so that Message objects
+ * can be stored in sets.
+ * @returns Returns true if the first Message is less than the second Message,
+ *          and false otherwise.
+ */
+LOOT_API bool operator<(const Message& lhs, const Message& rhs);
 
 /**
  * Check if the first Message object is greater than the second Message object.
@@ -161,6 +143,34 @@ LOOT_API bool operator<=(const Message& lhs, const Message& rhs);
  *          Message object, false otherwise.
  */
 LOOT_API bool operator>=(const Message& lhs, const Message& rhs);
+
+/**
+ * Get a given Message as a SimpleMessage given a language.
+ * @param  message
+ *         The message to convert.
+ * @param  language
+ *         The preferred language for the message content.
+ * @return A SimpleMessage object for the preferred language, or for English
+ *         if message text is not available for the given language.
+ */
+LOOT_API std::optional<SimpleMessage> ToSimpleMessage(
+    const Message& message,
+    const std::string& language);
+
+/**
+ * Get the given messages as simple messages given a language.
+ * @param  messages
+ *         The messages to convert.
+ * @param  language
+ *         The preferred language for the message content.
+ * @return A vector of SimpleMessage objects for the preferred language, or for
+ *         English if message text is not available for the given language. The
+ *         order of the input Message objects is preserved, though any messages
+ *         without the preferred language or English content will be omitted.
+ */
+LOOT_API std::vector<SimpleMessage> ToSimpleMessages(
+    const std::vector<Message>& messages,
+    const std::string& language);
 }
 
 #endif

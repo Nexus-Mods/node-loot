@@ -36,11 +36,16 @@ namespace loot {
 class Group {
 public:
   /**
+   * The name of the group to which all plugins belong by default.
+   */
+  static constexpr const char* DEFAULT_NAME = "default";
+
+  /**
    * Construct a Group with the name "default" and an empty set of groups to
    * load after.
    * @return A Group object.
    */
-  LOOT_API explicit Group();
+  LOOT_API Group() = default;
 
   /**
    * Construct a Group with the given name, description and set of groups to
@@ -54,22 +59,8 @@ public:
    * @return A Group object.
    */
   LOOT_API explicit Group(const std::string& name,
-                 const std::vector<std::string>& afterGroups = {},
-                 const std::string& description = "");
-
-  /**
-   * Check if two Group objects are equal by comparing their names.
-   * @returns True if the objects' fields are equal, false otherwise.
-   */
-  LOOT_API bool operator==(const Group& rhs) const;
-
-  /**
-   * A less-than operator implemented with no semantics so that Group objects
-   * can be stored in sets.
-   * @returns True if this Group is less than the given Group, false
-   *          otherwise.
-   */
-  LOOT_API bool operator<(const Group& rhs) const;
+                          const std::vector<std::string>& afterGroups = {},
+                          const std::string& description = "");
 
   /**
    * Get the name of the group.
@@ -90,16 +81,30 @@ public:
   LOOT_API std::vector<std::string> GetAfterGroups() const;
 
 private:
-  std::string name_;
+  std::string name_{DEFAULT_NAME};
   std::string description_;
   std::vector<std::string> afterGroups_;
 };
+
+/**
+ * Check if two Group objects are equal by comparing their names.
+ * @returns True if the objects' fields are equal, false otherwise.
+ */
+LOOT_API bool operator==(const Group& lhs, const Group& rhs);
 
 /**
  * Check if two Group objects are not equal.
  * @returns True if the Group objects are not equal, false otherwise.
  */
 LOOT_API bool operator!=(const Group& lhs, const Group& rhs);
+
+/**
+ * A less-than operator implemented with no semantics so that Group objects
+ * can be stored in sets.
+ * @returns True if the first Group is less than the second Group, false
+ *          otherwise.
+ */
+LOOT_API bool operator<(const Group& lhs, const Group& rhs);
 
 /**
  * Check if the first Group object is greater than the second Group

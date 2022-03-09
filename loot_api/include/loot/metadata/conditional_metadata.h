@@ -39,7 +39,7 @@ public:
    * Construct a ConditionalMetadata object with an empty condition string.
    * @return A ConditionalMetadata object.
    */
-  LOOT_API explicit ConditionalMetadata();
+  LOOT_API ConditionalMetadata() = default;
 
   /**
    * Construct a ConditionalMetadata object with a given condition string.
@@ -55,14 +55,6 @@ public:
    * @return True if the condition string is not empty, false otherwise.
    */
   LOOT_API bool IsConditional() const;
-
-  /**
-   * Check if the condition string is syntactically valid.
-   *
-   * Throws a ``ConditionSyntaxError`` if the condition string's syntax is not
-   * valid.
-   */
-  LOOT_API void ParseCondition() const;
 
   /**
    * Get the condition string.

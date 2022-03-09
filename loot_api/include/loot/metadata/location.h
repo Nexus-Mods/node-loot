@@ -39,7 +39,7 @@ public:
    * Construct a Location with empty URL and name strings.
    * @return A Location object.
    */
-  LOOT_API explicit Location();
+  LOOT_API Location() = default;
 
   /**
    * Construct a Location with the given URL and name.
@@ -49,21 +49,8 @@ public:
    *         A name for the URL, eg. the page or site name.
    * @return A Location object.
    */
-  LOOT_API explicit Location(const std::string& url, const std::string& name = "");
-
-  /**
-   * A less-than operator implemented with no semantics so that Location objects
-   * can be stored in sets.
-   * @returns True if this Location is less than the given Location, false 
-   *          otherwise.
-   */
-  LOOT_API bool operator<(const Location& rhs) const;
-
-  /**
-   * Check if two Location objects are equal by comparing their fields.
-   * @returns True if the objects' fields are equal, false otherwise.
-   */
-  LOOT_API bool operator==(const Location& rhs) const;
+  LOOT_API explicit Location(const std::string& url,
+                             const std::string& name = "");
 
   /**
    * Get the object's URL.
@@ -83,13 +70,27 @@ private:
 };
 
 /**
+ * Check if two Location objects are equal by comparing their fields.
+ * @returns True if the objects' fields are equal, false otherwise.
+ */
+LOOT_API bool operator==(const Location& lhs, const Location& rhs);
+
+/**
  * Check if two Location objects are not equal.
  * @returns True if the Location objects are not equal, false otherwise.
  */
 LOOT_API bool operator!=(const Location& lhs, const Location& rhs);
 
 /**
- * Check if the first Location object is greater than the second Location 
+ * A less-than operator implemented with no semantics so that Location objects
+ * can be stored in sets.
+ * @returns True if the first Location is less than the second Location, false
+ *          otherwise.
+ */
+LOOT_API bool operator<(const Location& lhs, const Location& rhs);
+
+/**
+ * Check if the first Location object is greater than the second Location
  * object.
  * @returns True if the second Location object is less than the first Location
  *          object, false otherwise.
@@ -97,17 +98,17 @@ LOOT_API bool operator!=(const Location& lhs, const Location& rhs);
 LOOT_API bool operator>(const Location& lhs, const Location& rhs);
 
 /**
- * Check if the first Location object is less than or equal to the second 
+ * Check if the first Location object is less than or equal to the second
  * Location object.
- * @returns True if the first Location object is not greater than the second 
+ * @returns True if the first Location object is not greater than the second
  *          Location object, false otherwise.
  */
 LOOT_API bool operator<=(const Location& lhs, const Location& rhs);
 
 /**
- * Check if the first Location object is greater than or equal to the second 
+ * Check if the first Location object is greater than or equal to the second
  * Location object.
- * @returns True if the first Location object is not less than the second 
+ * @returns True if the first Location object is not less than the second
  *          Location object, false otherwise.
  */
 LOOT_API bool operator>=(const Location& lhs, const Location& rhs);

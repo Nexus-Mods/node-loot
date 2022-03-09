@@ -24,9 +24,9 @@
 #ifndef LOOT_METADATA_MESSAGE_CONTENT
 #define LOOT_METADATA_MESSAGE_CONTENT
 
+#include <optional>
 #include <string>
 #include <vector>
-#include <optional>
 
 #include "loot/api_decorator.h"
 
@@ -40,13 +40,13 @@ public:
    * The code for the default language assumed for message content, which is
    * "en" (English).
    */
-  LOOT_API static const std::string defaultLanguage;
+  static constexpr const char* DEFAULT_LANGUAGE = "en";
 
   /**
    * Construct a MessageContent object with an empty English message string.
    * @return A MessageContent object.
    */
-  LOOT_API explicit MessageContent();
+  LOOT_API MessageContent() = default;
 
   /**
    * Construct a Message object with the given text in the given language.
@@ -56,8 +56,9 @@ public:
    *         The language that the message is written in.
    * @return A MessageContent object.
    */
-  LOOT_API explicit MessageContent(const std::string& text,
-                          const std::string& language = defaultLanguage);
+  LOOT_API explicit MessageContent(
+      const std::string& text,
+      const std::string& language = DEFAULT_LANGUAGE);
 
   /**
    * Get the message text.
@@ -71,60 +72,30 @@ public:
    */
   LOOT_API std::string GetLanguage() const;
 
-  /**
-   * A less-than operator implemented with no semantics so that MessageContent
-   * objects can be stored in sets.
-   * @returns True if this MessageContent is less than the given
-   *          MessageContent, false otherwise.
-   */
-  LOOT_API bool operator<(const MessageContent& rhs) const;
-
-  /**
-   * Check if two MessageContent objects are equal by comparing their fields.
-   * @returns True if the objects' fields are equal, false otherwise.
-   */
-  LOOT_API bool operator==(const MessageContent& rhs) const;
-
-  /**
-   * Choose a MessageContent object from a vector given a language.
-   * @param  content
-   *         The MessageContent objects to choose between.
-   * @param  language
-   *         The locale or language code for the preferred language to select.
-   *         Locale codes are of the form <language code>_<country code>.
-   * @return A MessageContent object.
-   *
-   *         If the vector only contains a single element, that element is
-   *         returned.
-   *
-   *         If content with a language that exactly matches the given locale
-   *         or language code is present, that content is returned.
-   *
-   *         If a locale code is given and there is no exact match but content
-   *         for that locale's language is present, that content is returned.
-   *
-   *         If a language code is given and there is no exact match but content
-   *         for a locale in that langauge is present, that content is returned.
-   *
-   *         If no locale or language code matches are found and content in the
-   *         default language is present, that content is returned.
-   *
-   *         Otherwise, an empty optional is returned.
-   */
-  LOOT_API static std::optional<MessageContent> Choose(
-      const std::vector<MessageContent> content,
-      const std::string& language);
-
 private:
   std::string text_;
-  std::string language_;
+  std::string language_{DEFAULT_LANGUAGE};
 };
+
+/**
+ * Check if two MessageContent objects are equal by comparing their fields.
+ * @returns True if the objects' fields are equal, false otherwise.
+ */
+LOOT_API bool operator==(const MessageContent& lhs, const MessageContent& rhs);
 
 /**
  * Check if two MessageContent objects are not equal.
  * @returns True if the MessageContent objects are not equal, false otherwise.
  */
 LOOT_API bool operator!=(const MessageContent& lhs, const MessageContent& rhs);
+
+/**
+ * A less-than operator implemented with no semantics so that MessageContent
+ * objects can be stored in sets.
+ * @returns True if the first MessageContent is less than the second
+ *          MessageContent, false otherwise.
+ */
+LOOT_API bool operator<(const MessageContent& lhs, const MessageContent& rhs);
 
 /**
  * Check if the first MessageContent object is greater than the second
@@ -149,6 +120,31 @@ LOOT_API bool operator<=(const MessageContent& lhs, const MessageContent& rhs);
  *          MessageContent object, false otherwise.
  */
 LOOT_API bool operator>=(const MessageContent& lhs, const MessageContent& rhs);
+
+/**
+ * Choose a MessageContent object from a vector given a language.
+ * @param  content
+ *         The MessageContent objects to choose between.
+ * @param  language
+ *         The locale or language code for the preferred language to select.
+ *         Locale codes are of the form `[language code]_[country code]`.
+ * @return A MessageContent object.
+ *         * If the vector only contains a single element, that element is
+ *           returned.
+ *         * If content with a language that exactly matches the given locale
+ *           or language code is present, that content is returned.
+ *         * If a locale code is given and there is no exact match but content
+ *           for that locale's language is present, that content is returned.
+ *         * If a language code is given and there is no exact match but
+ *           content for a locale in that langauge is present, that content is
+ *           returned.
+ *         * If no locale or language code matches are found and content in
+ *           the default language is present, that content is returned.
+ *         * Otherwise, an empty optional is returned.
+ */
+LOOT_API std::optional<MessageContent> SelectMessageContent(
+    const std::vector<MessageContent> content,
+    const std::string& language);
 }
 
 #endif

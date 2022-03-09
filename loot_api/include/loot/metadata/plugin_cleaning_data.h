@@ -44,7 +44,7 @@ public:
    * and no detail.
    * @return A PluginCleaningData object.
    */
-  LOOT_API explicit PluginCleaningData();
+  LOOT_API PluginCleaningData() = default;
 
   /**
    * Construct a PluginCleaningData object with the given CRC and utility,
@@ -76,26 +76,13 @@ public:
    *         The number of deleted navmeshes found in the plugin.
    * @return A PluginCleaningData object.
    */
-  LOOT_API explicit PluginCleaningData(uint32_t crc,
-                                       const std::string& utility,
-                                       const std::vector<MessageContent>& detail,
-                                       unsigned int itm,
-                                       unsigned int ref,
-                                       unsigned int nav);
-  /**
-   * A less-than operator implemented with no semantics so that
-   * PluginCleaningData objects can be stored in sets.
-   * @returns True if this PluginCleaningData is less than the given
-   *          PluginCleaningData, false otherwise.
-   */
-  LOOT_API bool operator<(const PluginCleaningData& rhs) const;
-
-  /**
-   * Check if two PluginCleaningData objects are equal by comparing their
-   * fields.
-   * @returns True if the objects' fields are equal, false otherwise.
-   */
-  LOOT_API bool operator==(const PluginCleaningData& rhs) const;
+  LOOT_API explicit PluginCleaningData(
+      uint32_t crc,
+      const std::string& utility,
+      const std::vector<MessageContent>& detail,
+      unsigned int itm,
+      unsigned int ref,
+      unsigned int nav);
 
   /**
    * Get the CRC that identifies the plugin that the cleaning data is for.
@@ -124,7 +111,7 @@ public:
   /**
    * Get the name of the cleaning utility that was used to check the plugin.
    * @return A cleaning utility name, possibly related information such as
-   *         a version number and/or a Markdown-formatted URL to the utility's
+   *         a version number and/or a CommonMark-formatted URL to the utility's
    *         download location.
    */
   LOOT_API std::string GetCleaningUtility() const;
@@ -137,23 +124,22 @@ public:
    */
   LOOT_API std::vector<MessageContent> GetDetail() const;
 
-  /**
-   * Choose a detail MessageContent object given a preferred language.
-   * @param  language
-   *         The preferred language's code.
-   * @return The MessageContent object for the preferred language, or if one
-   *         does not exist, the English-language MessageContent object.
-   */
-  LOOT_API std::optional<MessageContent> ChooseDetail(const std::string& language) const;
-
 private:
-  uint32_t crc_;
-  unsigned int itm_;
-  unsigned int ref_;
-  unsigned int nav_;
+  uint32_t crc_{0};
+  unsigned int itm_{0};
+  unsigned int ref_{0};
+  unsigned int nav_{0};
   std::string utility_;
   std::vector<MessageContent> detail_;
 };
+
+/**
+ * Check if two PluginCleaningData objects are equal by comparing their
+ * fields.
+ * @returns True if the objects' fields are equal, false otherwise.
+ */
+LOOT_API bool operator==(const PluginCleaningData& lhs,
+                         const PluginCleaningData& rhs);
 
 /**
  * Check if two MessageContent objects are not equal.
@@ -161,6 +147,15 @@ private:
  */
 LOOT_API bool operator!=(const PluginCleaningData& lhs,
                          const PluginCleaningData& rhs);
+
+/**
+ * A less-than operator implemented with no semantics so that
+ * PluginCleaningData objects can be stored in sets.
+ * @returns True if the first PluginCleaningData is less than the second
+ *          PluginCleaningData, false otherwise.
+ */
+LOOT_API bool operator<(const PluginCleaningData& lhs,
+                        const PluginCleaningData& rhs);
 
 /**
  * Check if the first PluginCleaningData object is greater than the second

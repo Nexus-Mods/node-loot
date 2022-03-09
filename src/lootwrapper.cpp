@@ -172,27 +172,13 @@ Loot::Loot(const Napi::CallbackInfo &info)
 }
 
 
-Napi::Value Loot::updateFile(const Napi::CallbackInfo &info) {
-  std::string masterlistPath, repoUrl, repoBranch;
-  unpackArgs(info, masterlistPath, repoUrl, repoBranch);
-
-  try {
-    bool res = loot::UpdateFile(u8Tou16(masterlistPath), repoUrl, repoBranch);
-    return Napi::Boolean::New(info.Env(), res);
-  } catch (const std::filesystem::filesystem_error &e) {
-    throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str());
-  } catch (const std::exception &e) {
-    throw LOOTError(info.Env(), "updateFile", e.what());
-  }
-}
-
 Napi::Value Loot::loadLists(const Napi::CallbackInfo &info) {
   std::wstring masterlistPath, userlistPath, preludePath;
   unpackArgs(info, masterlistPath, userlistPath, preludePath);
 
   try {
-    auto db = m_Game->GetDatabase();
-    db->LoadLists(masterlistPath, userlistPath, preludePath);
+    loot::DatabaseInterface &db = m_Game->GetDatabase();
+    db.LoadLists(masterlistPath, userlistPath, preludePath);
     // m_Game->GetDatabase()->LoadLists(masterlistPath, userlistPath);
   } catch (const std::filesystem::filesystem_error &e) {
     throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str());
@@ -225,7 +211,7 @@ Napi::Value Loot::getPluginMetadata(const Napi::CallbackInfo &info) {
   try {
     Napi::Value res = Napi::Object::New(info.Env());
 
-    std::optional<loot::PluginMetadata> meta = m_Game->GetDatabase()->GetPluginMetadata(pluginName, includeUserMetadata, evaluateConditions);
+    std::optional<loot::PluginMetadata> meta = m_Game->GetDatabase().GetPluginMetadata(pluginName, includeUserMetadata, evaluateConditions);
     if (meta.has_value()) {
       // previously throw an exception here but this is *not* an error, it happens for all plugins
       // that have no data
@@ -257,7 +243,7 @@ Napi::Value Loot::getPlugin(const Napi::CallbackInfo &info) {
 
   try {
     auto plugin = m_Game->GetPlugin(pluginName);
-    if (plugin.get() == nullptr) {
+    if (plugin == nullptr) {
       return info.Env().Undefined();
     }
 
@@ -283,26 +269,6 @@ Napi::Value Loot::getPlugin(const Napi::CallbackInfo &info) {
     throw LOOTError(info.Env(), "getPlugin", e.what());
   }
   return info.Env().Undefined();
-}
-
-Napi::Value Loot::getMasterlistRevision(const Napi::CallbackInfo &info) {
-  std::wstring masterlistPath;
-  bool getShortId;
-  unpackArgs(info, masterlistPath, getShortId);
-
-  auto res = Napi::Object::New(info.Env());
-
-  try {
-    loot::FileRevision rev = loot::GetFileRevision(masterlistPath, getShortId);
-    res.Set("isModified", rev.is_modified);
-    res.Set("revisionDate", rev.date);
-    res.Set("revisionId", rev.id);
-  } catch (const std::filesystem::filesystem_error &e) {
-    throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str());
-  } catch (const std::exception &e) {
-    throw LOOTError(info.Env(), "getMasterlistRevision", e.what());
-  }
-  return res;
 }
 
 Napi::Value Loot::sortPlugins(const Napi::CallbackInfo &info) {
@@ -365,7 +331,7 @@ Napi::Value Loot::getGroups(const Napi::CallbackInfo &info) {
   unpackArgs(info, includeUserGroups);
 
   try {
-    return toNAPI(info.Env(), m_Game->GetDatabase()->GetGroups(includeUserGroups));
+    return toNAPI(info.Env(), m_Game->GetDatabase().GetGroups(includeUserGroups));
   } catch (const std::exception &e) {
     throw LOOTError(info.Env(), "getGroups", e.what());
   }
@@ -373,7 +339,7 @@ Napi::Value Loot::getGroups(const Napi::CallbackInfo &info) {
 
 Napi::Value Loot::getUserGroups(const Napi::CallbackInfo &info) {
   try {
-    return toNAPI(info.Env(), m_Game->GetDatabase()->GetUserGroups());
+    return toNAPI(info.Env(), m_Game->GetDatabase().GetUserGroups());
   } catch (const std::exception &e) {
     throw LOOTError(info.Env(), "getUserGroups", e.what());
   }
@@ -384,7 +350,7 @@ Napi::Value Loot::setUserGroups(const Napi::CallbackInfo &info) {
   unpackArgs(info, groups);
 
   try {
-    m_Game->GetDatabase()->SetUserGroups(groups);
+    m_Game->GetDatabase().SetUserGroups(groups);
     return info.Env().Undefined();
   } catch (const std::exception &e) {
     throw LOOTError(info.Env(), "setUserGroups", e.what());
@@ -396,7 +362,7 @@ Napi::Value Loot::getGroupsPath(const Napi::CallbackInfo &info) {
   unpackArgs(info, fromGroupName, toGroupName);
 
   try {
-    return toNAPI(info.Env(), m_Game->GetDatabase()->GetGroupsPath(fromGroupName, toGroupName));
+    return toNAPI(info.Env(), m_Game->GetDatabase().GetGroupsPath(fromGroupName, toGroupName));
   } catch (const std::exception &e) {
     throw LOOTError(info.Env(), "getGroupsPath", e.what());
   }
@@ -407,7 +373,7 @@ Napi::Value Loot::getGeneralMessages(const Napi::CallbackInfo &info) {
   unpackArgs(info, evaluateConditions);
 
   try {
-    return toNAPI(info.Env(), m_Game->GetDatabase()->GetGeneralMessages(evaluateConditions));
+    return toNAPI(info.Env(), m_Game->GetDatabase().GetGeneralMessages(evaluateConditions));
   } catch (const std::exception &e) {
     throw LOOTError(info.Env(), "getGeneralMessages", e.what());
   }
