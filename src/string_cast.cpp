@@ -6,6 +6,8 @@
 #define _WINSOCKAPI_
 #include <windows.h>
 
+#include <stdexcept>
+
 uint32_t windowsCP(CodePage codePage)
 {
   switch (codePage) {
