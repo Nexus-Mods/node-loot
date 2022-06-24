@@ -51,21 +51,11 @@
                   "-DelayLoad:node.exe",
                 ],
                 'msvs_settings': {
-                  'VCCLCompilerTool': {
-                    'ExceptionHandling': 1,
-                    'RuntimeLibrary': 0
-                  },
                   "VCLibrarianTool": {
                     'AdditionalOptions': [ '/LTCG' ]
                   },
                   'VCLinkerTool': {
                     'LinkTimeCodeGeneration': 1
-                  },
-                  "msbuild_settings": {
-                    "ClCompile": {
-                      "AdditionalOptions": ["-std:c++17", "/MT"],
-                      "RuntimeLibrary": "MultiThreaded"
-                    }
                   }
                 }
               }]
