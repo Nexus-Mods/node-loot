@@ -60,6 +60,12 @@
                   },
                   'VCLinkerTool': {
                     'LinkTimeCodeGeneration': 1
+                  },
+                  "msbuild_settings": {
+                    "ClCompile": {
+                      "AdditionalOptions": ["-std:c++17", "/MT"],
+                      "RuntimeLibrary": "MultiThreaded"
+                    }
                   }
                 }
               }]
