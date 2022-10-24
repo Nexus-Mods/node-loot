@@ -59,10 +59,12 @@ std::string fromNAPI(const Napi::Value &info) {
   return info.ToString().Utf8Value();
 }
 
+#ifdef _WIN32
 template<>
 std::wstring fromNAPI(const Napi::Value &info) {
   return u8Tou16(info.ToString().Utf8Value());
 }
+#endif
 
 template<>
 int fromNAPI(const Napi::Value &info) {

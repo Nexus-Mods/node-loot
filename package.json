@@ -23,7 +23,7 @@
     "autogypi": "^0.2.2",
     "lodash": "^4.17.21",
     "node-addon-api": "*",
-    "node-gyp": "^7.1.0",
+    "node-gyp": "^9.0.0",
     "prebuild-install": "7.1.0"
   }
 }

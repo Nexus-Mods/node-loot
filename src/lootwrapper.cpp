@@ -10,8 +10,8 @@
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include "exceptions.h"
 #endif
+#include "exceptions.h"
 #include "string_cast.h"
 #include "util.h"
 #include "napi_helpers.h"
