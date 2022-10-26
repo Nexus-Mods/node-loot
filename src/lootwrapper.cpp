@@ -209,8 +209,6 @@ Napi::Value Loot::getPluginMetadata(const Napi::CallbackInfo &info) {
   unpackArgs<1>(info, pluginName, includeUserMetadata, evaluateConditions);
 
   try {
-    Napi::Value res = Napi::Object::New(info.Env());
-
     std::optional<loot::PluginMetadata> meta = m_Game->GetDatabase().GetPluginMetadata(pluginName, includeUserMetadata, evaluateConditions);
     if (meta.has_value()) {
       // previously throw an exception here but this is *not* an error, it happens for all plugins
