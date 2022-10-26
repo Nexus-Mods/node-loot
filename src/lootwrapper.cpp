@@ -17,7 +17,7 @@
 #include "napi_helpers.h"
 
 template<>
-Napi::Value toNAPI<loot::Tag>(Napi::Env &env, const loot::Tag &input) {
+Napi::Value toNAPI<loot::Tag>(const Napi::Env &env, const loot::Tag &input) {
   Napi::Object res = Napi::Object::New(env);
   res.Set("condition", input.GetCondition());
   res.Set("name", input.GetName());
@@ -28,7 +28,7 @@ Napi::Value toNAPI<loot::Tag>(Napi::Env &env, const loot::Tag &input) {
 }
 
 template<>
-Napi::Value toNAPI<loot::MessageContent>(Napi::Env &env, const loot::MessageContent &input) {
+Napi::Value toNAPI<loot::MessageContent>(const Napi::Env &env, const loot::MessageContent &input) {
   Napi::Object res = Napi::Object::New(env);
 
   res.Set("text", input.GetText());
@@ -38,7 +38,7 @@ Napi::Value toNAPI<loot::MessageContent>(Napi::Env &env, const loot::MessageCont
 }
 
 template<>
-Napi::Value toNAPI<loot::Message>(Napi::Env &env, const loot::Message &input) {
+Napi::Value toNAPI<loot::Message>(const Napi::Env &env, const loot::Message &input) {
   Napi::Object res = Napi::Object::New(env);
   res.Set("condition", input.GetCondition());
   res.Set("content", toNAPI(env, input.GetContent()));
@@ -49,7 +49,7 @@ Napi::Value toNAPI<loot::Message>(Napi::Env &env, const loot::Message &input) {
 }
 
 template<>
-Napi::Value toNAPI<loot::PluginCleaningData>(Napi::Env &env, const loot::PluginCleaningData &input) {
+Napi::Value toNAPI<loot::PluginCleaningData>(const Napi::Env &env, const loot::PluginCleaningData &input) {
   Napi::Object res = Napi::Object::New(env);
   res.Set("cleaningUtility", input.GetCleaningUtility());
   res.Set("crc", input.GetCRC());
@@ -62,7 +62,7 @@ Napi::Value toNAPI<loot::PluginCleaningData>(Napi::Env &env, const loot::PluginC
 }
 
 template<>
-Napi::Value toNAPI<loot::File>(Napi::Env &env, const loot::File &input) {
+Napi::Value toNAPI<loot::File>(const Napi::Env &env, const loot::File &input) {
   Napi::Object res = Napi::Object::New(env);
   res.Set("condition", input.GetCondition());
   res.Set("displayName", input.GetDisplayName());
@@ -73,7 +73,7 @@ Napi::Value toNAPI<loot::File>(Napi::Env &env, const loot::File &input) {
 }
 
 template<>
-Napi::Value toNAPI<loot::Location>(Napi::Env &env, const loot::Location &input) {
+Napi::Value toNAPI<loot::Location>(const Napi::Env &env, const loot::Location &input) {
   Napi::Object res = Napi::Object::New(env);
   res.Set("name", input.GetName());
   res.Set("url", input.GetURL());
@@ -82,7 +82,7 @@ Napi::Value toNAPI<loot::Location>(Napi::Env &env, const loot::Location &input) 
 }
 
 template<>
-Napi::Value toNAPI<loot::Vertex>(Napi::Env &env, const loot::Vertex &input) {
+Napi::Value toNAPI<loot::Vertex>(const Napi::Env &env, const loot::Vertex &input) {
   Napi::Object res = Napi::Object::New(env);
 
   res.Set("name", input.GetName());
@@ -93,7 +93,7 @@ Napi::Value toNAPI<loot::Vertex>(Napi::Env &env, const loot::Vertex &input) {
 }
 
 template<>
-Napi::Value toNAPI<loot::Group>(Napi::Env &env, const loot::Group &input) {
+Napi::Value toNAPI<loot::Group>(const Napi::Env &env, const loot::Group &input) {
   Napi::Object res = Napi::Object::New(env);
 
   res.Set("afterGroups", toNAPI(env, input.GetAfterGroups()));
@@ -112,7 +112,7 @@ loot::Group fromNAPI(const Napi::Value &info) {
     obj.Get("description").ToString().Utf8Value());
 }
 
-loot::GameType convertGameId(Napi::Env &env, const std::string &gameId) {
+loot::GameType convertGameId(const Napi::Env &env, const std::string &gameId) {
   std::map<std::string, loot::GameType> gameMap{
     { "morrowind", loot::GameType::tes3 },
     { "oblivion", loot::GameType::tes4 },

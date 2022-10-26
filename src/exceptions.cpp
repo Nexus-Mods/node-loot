@@ -32,7 +32,7 @@ std::wstring strerror(unsigned long errorno) {
 
 #endif // WIN32
 
-Napi::Error ErrnoException(Napi::Env &env, unsigned long lastError, const char * func, const char * path) {
+Napi::Error ErrnoException(const Napi::Env &env, unsigned long lastError, const char * func, const char * path) {
 
 #ifdef WIN32
   std::wstring errStr = strerror(lastError);
@@ -49,21 +49,21 @@ Napi::Error ErrnoException(Napi::Env &env, unsigned long lastError, const char *
   return res;
 }
 
-Napi::Error ExcWrap(Napi::Env &env, const char *func, const std::exception &e) {
+Napi::Error ExcWrap(const Napi::Env &env, const char *func, const std::exception &e) {
   Napi::Error res = Napi::Error::New(env, e.what());
   res.Set("func", func);
   return res;
 }
 
-Napi::Error UnsupportedGame(Napi::Env & env) {
+Napi::Error UnsupportedGame(const Napi::Env & env) {
   return Napi::Error::New(env, "game not supported");
 }
 
-Napi::Error BusyException(Napi::Env & env) {
+Napi::Error BusyException(const Napi::Env & env) {
   return Napi::Error::New(env, "Loot connection is busy");
 }
 
-Napi::Error CyclicalInteractionException(Napi::Env &env, loot::CyclicInteractionError & err) {
+Napi::Error CyclicalInteractionException(const Napi::Env &env, loot::CyclicInteractionError & err) {
   Napi::Error res = Napi::Error::New(env, err.what());
 
   std::vector<loot::Vertex> errCycle = err.GetCycle();
@@ -82,7 +82,7 @@ Napi::Error CyclicalInteractionException(Napi::Env &env, loot::CyclicInteraction
   return res;
 }
 
-Napi::Error InvalidParameter(Napi::Env &env, const char *func, const char *arg, const char *value) {
+Napi::Error InvalidParameter(const Napi::Env &env, const char *func, const char *arg, const char *value) {
   Napi::Error res = Napi::Error::New(env, "Invalid value passed to function");
   res.Set("arg", arg);
   res.Set("value", value);
@@ -91,7 +91,7 @@ Napi::Error InvalidParameter(Napi::Env &env, const char *func, const char *arg, 
   return res;
 }
 
-Napi::Error LOOTError(Napi::Env &env, const char *func, const char *what) {
+Napi::Error LOOTError(const Napi::Env &env, const char *func, const char *what) {
   Napi::Error res = Napi::Error::New(env, what);
   res.Set("func", func);
 
