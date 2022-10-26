@@ -3,4 +3,5 @@ build
 node_modules
 auto.gypi
 auto-top.gypi
-yarn-error.log 
+yarn-error.log
+.cache
