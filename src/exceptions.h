@@ -1,8 +1,9 @@
 #pragma once
 
-#ifdef WIN32
 
+#ifdef WIN32
 #include <windows.h>
+#endif // WIN32
 #include <exception>
 #include <napi.h>
 #include <loot/api.h>
@@ -24,5 +25,4 @@ Napi::Error InvalidParameter(Napi::Env &env, const char *func, const char *arg, 
 Napi::Error LOOTError(Napi::Env &env, const char *func, const char *what);
 
 
-#endif // WIN32
 

@@ -81,4 +81,12 @@ std::wstring u8Tou16(const std::string & input) {
   return toWC(input.c_str(), CodePage::UTF8, input.length());
 }
 
-#endif // WIN32
+#else // WIN32
+std::string toWC(const char * const &source, CodePage codePage, size_t sourceLength) {
+  return source;
+}
+
+std::string toMB(const char * const &source, CodePage codePage, size_t sourceLength) {
+  return source;
+}
+#endif
