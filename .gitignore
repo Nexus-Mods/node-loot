@@ -5,3 +5,5 @@ auto.gypi
 auto-top.gypi
 yarn-error.log
 .cache
+libloot
+libloot.*

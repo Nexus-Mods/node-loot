@@ -18,11 +18,12 @@
                 "src/util.h"
             ],
             "include_dirs": [
-                "./loot_api/include",
+                "./libloot/include",
                 "<!(node -p \"require('node-addon-api').include_dir\")"
             ],
             'cflags!': ['-fno-exceptions', '-g', '-O0'],
-            'cflags_cc!': ['-fno-exceptions'],
+            'cflags_cc': [ '-std=c++17' ],
+            'cflags_cc!': ['-fno-exceptions' ],
             'msvs_settings': {
               'VCCLCompilerTool': {
                 'ExceptionHandling': 1,
@@ -45,7 +46,7 @@
                   "WINVER=0x600"
                 ],
                 "libraries": [
-                  "-l../loot_api/loot"
+                  "-l../libloot/loot"
                   "-DelayLoad:node.exe",
                 ],
                 'msvs_settings': {
@@ -59,7 +60,7 @@
               }],
               ["OS!='win'", {
                 "libraries": [
-                  "../loot_api/loot.so"
+                  "../libloot/libloot.so"
                 ]
               }]
             ]
