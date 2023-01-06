@@ -2,9 +2,6 @@
     "targets": [
         {
           "target_name": "node-loot",
-            "includes": [
-                "auto.gypi"
-            ],
             "sources": [
                 "src/lootwrapper.cpp",
                 "src/lootwrapper.h",
@@ -65,8 +62,5 @@
               }]
             ]
         }
-    ],
-    "includes": [
-        "auto-top.gypi"
     ]
 }
