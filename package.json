@@ -29,5 +29,8 @@
     "node-gyp": "^9.0.0",
     "prebuild-install": "^7.1.0",
     "tar": "^6.1.13"
+  },
+  "resolutions": {
+    "node-gyp": "^9.0.0"
   }
 }
