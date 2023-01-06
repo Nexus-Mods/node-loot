@@ -2,9 +2,6 @@
     "targets": [
         {
           "target_name": "node-loot",
-            "includes": [
-                "auto.gypi"
-            ],
             "sources": [
                 "src/lootwrapper.cpp",
                 "src/lootwrapper.h",
@@ -18,14 +15,12 @@
                 "src/util.h"
             ],
             "include_dirs": [
-                "./loot_api/include",
+                "./libloot/include",
                 "<!(node -p \"require('node-addon-api').include_dir\")"
             ],
-            "libraries": [
-                "-l../loot_api/loot"
-            ],
             'cflags!': ['-fno-exceptions', '-g', '-O0'],
-            'cflags_cc!': ['-fno-exceptions'],
+            'cflags_cc': [ '-std=c++17' ],
+            'cflags_cc!': ['-fno-exceptions' ],
             'msvs_settings': {
               'VCCLCompilerTool': {
                 'ExceptionHandling': 1,
@@ -48,6 +43,7 @@
                   "WINVER=0x600"
                 ],
                 "libraries": [
+                  "-l../libloot/loot"
                   "-DelayLoad:node.exe",
                 ],
                 'msvs_settings': {
@@ -58,11 +54,13 @@
                     'LinkTimeCodeGeneration': 1
                   }
                 }
+              }],
+              ["OS!='win'", {
+                "libraries": [
+                  "../libloot/libloot.so"
+                ]
               }]
             ]
         }
-    ],
-    "includes": [
-        "auto-top.gypi"
     ]
 }

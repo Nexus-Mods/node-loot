@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <v8.h>
 
 enum class CodePage {
   LOCAL,

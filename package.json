@@ -8,22 +8,29 @@
   },
   "scripts": {
     "upload": "prebuild.cmd -r napi -t 4 -a x64 --prepack codesign",
-    "rebuild": "autogypi && node-gyp rebuild",
+    "rebuild": "node libloot.js && node-gyp rebuild",
     "install": "prebuild-install -r napi -t 4 -a x64 || npm run rebuild"
   },
   "author": "Black Tree Gaming Ltd.",
   "license": "GPL-3.0",
   "binary": {
-    "napi_versions": [4]
+    "napi_versions": [
+      4
+    ]
   },
   "devDependencies": {
     "prebuild": "^11.0.3"
   },
   "dependencies": {
-    "autogypi": "^0.2.2",
+    "cross-fetch": "^3.1.5",
     "lodash": "^4.17.21",
-    "node-addon-api": "*",
+    "node-7z": "Nexus-Mods/node-7z",
+    "node-addon-api": "^5.0.0",
     "node-gyp": "^9.0.0",
-    "prebuild-install": "7.1.0"
+    "prebuild-install": "^7.1.0",
+    "tar": "^6.1.13"
+  },
+  "resolutions": {
+    "node-gyp": "^9.0.0"
   }
 }
