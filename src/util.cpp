@@ -3,7 +3,8 @@
 
 const char *convertEdgeType(loot::EdgeType edgeType) {
   static std::map<loot::EdgeType, const char*> edgeMap{
-    { loot::EdgeType::group, "group" },
+    { loot::EdgeType::userGroup, "userGroup" },
+    { loot::EdgeType::masterlistGroup, "masterlistGroup" },
     { loot::EdgeType::hardcoded, "hardcoded" },
     { loot::EdgeType::master, "master" },
     { loot::EdgeType::masterFlag, "masterFlag" },
@@ -11,7 +12,8 @@ const char *convertEdgeType(loot::EdgeType edgeType) {
     { loot::EdgeType::masterlistRequirement, "masterlistRequirement" },
     { loot::EdgeType::userLoadAfter, "userlistLoadAfter" },
     { loot::EdgeType::userRequirement, "userlistRequirement" },
-    { loot::EdgeType::overlap, "overlap" },
+    { loot::EdgeType::assetOverlap, "assetOverlap" },
+    { loot::EdgeType::recordOverlap, "recordOverlap" },
     { loot::EdgeType::tieBreak, "tieBreak" }
   };
 

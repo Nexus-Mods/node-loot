@@ -39,15 +39,13 @@ public:
    * @brief Construct an exception for an undefined group.
    * @param groupName The name of the group that is undefined.
    */
-  LOOT_API UndefinedGroupError(const std::string& groupName) :
-      std::runtime_error("The group \"" + groupName + "\" does not exist"),
-      groupName_(groupName) {}
+  LOOT_API UndefinedGroupError(const std::string& groupName);
 
   /**
    * Get the name of the undefined group.
    * @return A group name.
    */
-  LOOT_API std::string GetGroupName() { return groupName_; }
+  LOOT_API std::string GetGroupName() const;
 
 private:
   std::string groupName_;
