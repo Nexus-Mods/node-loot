@@ -1,6 +1,6 @@
 {
   "name": "loot",
-  "version": "6.0.0",
+  "version": "6.0.1",
   "description": "Wrapper around the LOOT library for sorting plugins of gamebryo games (Oblivion, Skyrim, Fallout 3/NV/4)",
   "repository": {
     "type": "git",
