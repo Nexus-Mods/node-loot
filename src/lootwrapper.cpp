@@ -122,7 +122,8 @@ loot::GameType convertGameId(const Napi::Env &env, const std::string &gameId) {
     { "fallout3", loot::GameType::fo3 },
     { "falloutnv", loot::GameType::fonv },
     { "fallout4", loot::GameType::fo4 },
-    { "fallout4vr", loot::GameType::fo4vr }
+    { "fallout4vr", loot::GameType::fo4vr },
+    { "starfield", loot::GameType::starfield }
   };
 
   auto iter = gameMap.find(gameId);
@@ -192,9 +193,12 @@ Napi::Value Loot::loadPlugins(const Napi::CallbackInfo &info) {
   std::vector<std::string> plugins;
   bool headersOnly;
   unpackArgs(info, plugins, headersOnly);
-
+  std::vector<std::filesystem::path> pluginPaths;
+  std::transform(plugins.begin(), plugins.end(), std::back_inserter(pluginPaths), [](const std::string& str) {
+    return std::filesystem::path(str);
+  });
   try {
-    m_Game->LoadPlugins(plugins, headersOnly);
+    m_Game->LoadPlugins(pluginPaths, headersOnly);
   } catch (const std::filesystem::filesystem_error &e) {
     throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str());
   } catch (const std::exception &e) {
@@ -262,6 +266,8 @@ Napi::Value Loot::getPlugin(const Napi::CallbackInfo &info) {
     res.Set("isMaster", plugin->IsMaster());
     res.Set("isValidAsLightPlugin", plugin->IsValidAsLightPlugin());
     res.Set("loadsArchive", plugin->LoadsArchive());
+    res.Set("isOverridePlugin", plugin->IsOverridePlugin());
+    res.Set("isValidAsOverridePlugin", plugin->IsValidAsOverridePlugin());
     return res;
   } catch (const std::filesystem::filesystem_error &e) {
     throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str());
@@ -274,9 +280,12 @@ Napi::Value Loot::getPlugin(const Napi::CallbackInfo &info) {
 Napi::Value Loot::sortPlugins(const Napi::CallbackInfo &info) {
   std::vector<std::string> plugins;
   unpackArgs(info, plugins);
-
+  std::vector<std::filesystem::path> pluginPaths;
+  std::transform(plugins.begin(), plugins.end(), std::back_inserter(pluginPaths), [](const std::string& str) {
+    return std::filesystem::path(str);
+  });
   try {
-    return toNAPI(info.Env(), m_Game->SortPlugins(plugins));
+    return toNAPI(info.Env(), m_Game->SortPlugins(pluginPaths));
   } catch (loot::CyclicInteractionError &e) {
     throw CyclicalInteractionException(info.Env(), e);
   } catch (const std::filesystem::filesystem_error &e) {

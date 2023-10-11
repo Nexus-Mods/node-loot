@@ -43,7 +43,8 @@ public:
 
   /**
    * Get the plugin's filename.
-   * @return The plugin filename.
+   * @return The plugin filename. If the plugin was ghosted when it was loaded,
+   *         this filename will be without the .ghost suffix.
    */
   virtual std::string GetName() const = 0;
 
@@ -99,11 +100,24 @@ public:
   virtual bool IsLightPlugin() const = 0;
 
   /**
+   * Check if the plugin is an override plugin.
+   * @return True if plugin is an override plugin, false otherwise.
+   */
+  virtual bool IsOverridePlugin() const = 0;
+
+  /**
    * Check if the plugin is or would be valid as a light plugin.
    * @return True if the plugin is a valid light plugin or would be a valid
    *         light plugin, false otherwise.
    */
   virtual bool IsValidAsLightPlugin() const = 0;
+
+  /**
+   * Check if the plugin is or would be valid as an override plugin.
+   * @return True if the plugin is a valid override plugin or would be a valid
+   *         override plugin, false otherwise.
+   */
+  virtual bool IsValidAsOverridePlugin() const = 0;
 
   /**
    * Check if the plugin contains any records other than its TES4 header.
