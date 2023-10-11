@@ -34,6 +34,31 @@ public:
   virtual ~GameInterface() = default;
 
   /**
+   * @brief Get the game's type.
+   * @returns The game's type.
+   */
+  virtual GameType GetType() const = 0;
+
+  /**
+   * @brief   Gets the currently-set additional data paths.
+   * @details Only Fallout 4 installed from the Microsoft Store is configured
+   *          with any additional data paths by default, as its DLC directories
+   *          are installed outside of the Fallout 4 install path.
+   */
+  virtual std::vector<std::filesystem::path> GetAdditionalDataPaths() const = 0;
+
+  /**
+   * @brief   Set additional data paths.
+   * @details The additional data paths are used when interacting with the load
+   *          order, evaluating conditions and scanning for archives (BSA/BA2
+   *          depending on the game). Additional data paths are used in the
+   *          order they are given, and take precedence over the game's main
+   *          data path.
+   */
+  virtual void SetAdditionalDataPaths(
+      const std::vector<std::filesystem::path>& additionalDataPaths) = 0;
+
+  /**
    *  @name Metadata Access
    *  @{
    */
@@ -45,6 +70,14 @@ public:
    *          valid for the lifetime of the GameInterface instance.
    */
   virtual DatabaseInterface& GetDatabase() = 0;
+
+  /**
+   * @brief Get the database interface used for accessing metadata-related
+   *        functionality.
+   * @returns A reference to the game's DatabaseInterface. The reference remains
+   *          valid for the lifetime of the GameInterface instance.
+   */
+  virtual const DatabaseInterface& GetDatabase() const = 0;
 
   /**
    * @}
@@ -63,7 +96,7 @@ public:
    *         as given.
    * @returns True if the file is a valid plugin, false otherwise.
    */
-  virtual bool IsValidPlugin(const std::string& pluginPath) const = 0;
+  virtual bool IsValidPlugin(const std::filesystem::path& pluginPath) const = 0;
 
   /**
    * @brief Parses plugins and loads their data.
@@ -79,8 +112,9 @@ public:
    *        file if it has been identified by a previous call to
    *        ``IdentifyMainMasterFile()``.
    */
-  virtual void LoadPlugins(const std::vector<std::string>& pluginPaths,
-                           bool loadHeadersOnly) = 0;
+  virtual void LoadPlugins(
+      const std::vector<std::filesystem::path>& pluginPaths,
+      bool loadHeadersOnly) = 0;
 
   /**
    * @brief Get data for a loaded plugin.
@@ -121,7 +155,7 @@ public:
    *           loaded, and reads the contents of each plugin. No changes are
    *           applied to the load order used by the game. This function does
    *           not load or evaluate the masterlist or userlist.
-   *  @param plugins
+   *  @param pluginPaths
    *         The plugin paths to sort, in their current load order. Relative
    *         paths are resolved relative to the game's plugins directory, while
    *         absolute paths are used as given. Each plugin filename must be
@@ -130,7 +164,7 @@ public:
    *           order.
    */
   virtual std::vector<std::string> SortPlugins(
-      const std::vector<std::string>& pluginPaths) = 0;
+      const std::vector<std::filesystem::path>& pluginPaths) = 0;
 
   /**
    *  @}
