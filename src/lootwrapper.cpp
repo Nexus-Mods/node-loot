@@ -266,6 +266,8 @@ Napi::Value Loot::getPlugin(const Napi::CallbackInfo &info) {
     res.Set("isMaster", plugin->IsMaster());
     res.Set("isValidAsLightPlugin", plugin->IsValidAsLightPlugin());
     res.Set("loadsArchive", plugin->LoadsArchive());
+    res.Set("isOverridePlugin", plugin->IsOverridePlugin());
+    res.Set("isValidAsOverridePlugin", plugin->IsValidAsOverridePlugin());
     return res;
   } catch (const std::filesystem::filesystem_error &e) {
     throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str());
