@@ -22,7 +22,7 @@ The following procedure should be followed to ensure a smooth transition to a ne
 
 [2] Download the latest 64bit API release from https://github.com/loot/libloot/releases and replace the contents of the loot_api folder with the contents of the new release.
 
-[3] Go to https://loot-api.readthedocs.io/en/latest/api/changelog.html#id1 and go through the changelog of each incremental API release to see what changed.
+[3] Go to https://loot-api.readthedocs.io/en/latest/api/changelog.html#id1 and go through the changelog of each incremental API release (since the last version) to see what changed.
 
 [4] Go to src/lootwrapper.cpp and verify whether any of the changed API functionality could potentially affect the module's wrapper. The wrapper function names will match the API functions (unless renamed) Things like changed function parameters, newly added/renamed functions should be reflected in the lootwrapper.cpp file as required. It's usually safe to assume that the return values will not change as LOOT is quite robust at this point and is widely used by Vortex and other applications.
 
