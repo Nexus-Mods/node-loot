@@ -40,7 +40,7 @@ The below steps are only valid for Vortex. Please make sure you have a functioni
 
 [10] Once all relevant functionality has been fully tested, submit a pull request.
 
-[10.1] Go back to the gamebryo-plugin-management extension and ensure the package file's loot dependency change is reverted.
+[10.1] Go back to the gamebryo-plugin-management extension and ensure the package file's loot dependency change is reverted. It's a good idea to `rm -rf node_modules` just in case.
 
 [11] Once the PR has been merged, go to the gamebryo-plugin-management extension directory and run `yarn upgrade-interactive` - use the interface to upgrade the loot dependency to the latest version.
 
