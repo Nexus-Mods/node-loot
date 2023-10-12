@@ -34,6 +34,16 @@ The below steps are only valid for Vortex. Please make sure you have a functioni
 
 [7] Open the package.json file in the gamebryo-plugin-management extension and change the loot dependency from `"loot": "Nexus-Mods/node-loot"` to `"loot": "Nexus-Mods/node-loot#YOUR_BRANCH",` (obviously change the Nexus-Mods/node-loot part if your repo is located somewhere else)
 
-[8] Run `yarn install` to ensure the package manager pulls your updated loot module and `yarn build`.
+[8] Run `yarn install` to ensure the package manager pulls your updated loot module and `yarn build`. 
 
 [9] Run your Vortex development build and test all relevant functionality depending on the changes made to the LOOT API as noted in the changelogs.
+
+[10] Once all relevant functionality has been fully tested, submit a pull request.
+
+[10.1] Go back to the gamebryo-plugin-management extension and ensure the package file's loot dependency change is reverted.
+
+[11] Once the PR has been merged, go to the gamebryo-plugin-management extension directory and run `yarn upgrade-interactive` - use the interface to upgrade the loot dependency to the latest version.
+
+[12] Increment the version of the gamebryo-plugin-management extension and submit a PR. The PR should include an updated `package.json` and `yarn.lock` files.
+
+[13] Once merged - make sure to update the gamebryo-plugin-management submodule.
