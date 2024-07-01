@@ -262,12 +262,14 @@ Napi::Value Loot::getPlugin(const Napi::CallbackInfo &info) {
     auto version = plugin->GetVersion();
     res.Set("version", version.has_value() ? Napi::Value::From(info.Env(), version.value()) : (info.Env().Null()));
     res.Set("isEmpty", plugin->IsEmpty());
+    res.Set("IsUpdatePlugin", plugin->IsUpdatePlugin());
     res.Set("isLightPlugin", plugin->IsLightPlugin());
+    res.Set("IsMediumPlugin", plugin->IsMediumPlugin());
     res.Set("isMaster", plugin->IsMaster());
+    res.Set("IsValidAsMediumPlugin", plugin->IsValidAsMediumPlugin());
     res.Set("isValidAsLightPlugin", plugin->IsValidAsLightPlugin());
+    res.Set("IsValidAsUpdatePlugin", plugin->IsValidAsUpdatePlugin());
     res.Set("loadsArchive", plugin->LoadsArchive());
-    res.Set("isOverridePlugin", plugin->IsOverridePlugin());
-    res.Set("isValidAsOverridePlugin", plugin->IsValidAsOverridePlugin());
     return res;
   } catch (const std::filesystem::filesystem_error &e) {
     throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str());
