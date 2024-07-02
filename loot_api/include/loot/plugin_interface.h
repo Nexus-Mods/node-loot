@@ -100,10 +100,16 @@ public:
   virtual bool IsLightPlugin() const = 0;
 
   /**
-   * Check if the plugin is an override plugin.
-   * @return True if plugin is an override plugin, false otherwise.
+   * Check if the plugin is a medium plugin.
+   * @return True if plugin is a medium plugin, false otherwise.
    */
-  virtual bool IsOverridePlugin() const = 0;
+  virtual bool IsMediumPlugin() const = 0;
+
+  /**
+   * Check if the plugin is an update plugin.
+   * @return True if plugin is an update plugin, false otherwise.
+   */
+  virtual bool IsUpdatePlugin() const = 0;
 
   /**
    * Check if the plugin is or would be valid as a light plugin.
@@ -113,11 +119,18 @@ public:
   virtual bool IsValidAsLightPlugin() const = 0;
 
   /**
-   * Check if the plugin is or would be valid as an override plugin.
-   * @return True if the plugin is a valid override plugin or would be a valid
-   *         override plugin, false otherwise.
+   * Check if the plugin is or would be valid as a medium plugin.
+   * @return True if the plugin is a valid medium plugin or would be a valid
+   *         medium plugin, false otherwise.
    */
-  virtual bool IsValidAsOverridePlugin() const = 0;
+  virtual bool IsValidAsMediumPlugin() const = 0;
+
+  /**
+   * Check if the plugin is or would be valid as an update plugin.
+   * @return True if the plugin is a valid update plugin or would be a valid
+   *         update plugin, false otherwise.
+   */
+  virtual bool IsValidAsUpdatePlugin() const = 0;
 
   /**
    * Check if the plugin contains any records other than its TES4 header.

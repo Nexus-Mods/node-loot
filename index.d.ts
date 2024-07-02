@@ -91,7 +91,7 @@ export class PluginCleaningData {
 export class PluginMetadata {
 	messages: Message[];
 	name: string;
-  group: string;
+  	group: string;
 	tags: Tag[];
 	cleanInfo: PluginCleaningData[];
 	dirtyInfo: PluginCleaningData[];
@@ -121,8 +121,12 @@ export class PluginInterface {
  
 	crc: number;
 	isMaster: boolean;
-	isLightMaster: boolean;
-	isValidAsLightMaster: boolean;
+	isLightPlugin: boolean;
+	isValidAsLightPlugin: boolean;
+	IsMediumPlugin: boolean;
+	IsValidAsMediumPlugin: boolean;
+	IsUpdatePlugin: boolean;
+	IsValidAsUpdatePlugin: boolean;
 	isEmpty: boolean;
 	loadsArchive: boolean;
 }
