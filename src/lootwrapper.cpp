@@ -265,6 +265,7 @@ Napi::Value Loot::getPlugin(const Napi::CallbackInfo &info) {
     res.Set("IsUpdatePlugin", plugin->IsUpdatePlugin());
     res.Set("isLightPlugin", plugin->IsLightPlugin());
     res.Set("IsMediumPlugin", plugin->IsMediumPlugin());
+    res.Set("IsBlueprintPlugin", plugin->IsBlueprintPlugin());
     res.Set("isMaster", plugin->IsMaster());
     res.Set("IsValidAsMediumPlugin", plugin->IsValidAsMediumPlugin());
     res.Set("isValidAsLightPlugin", plugin->IsValidAsLightPlugin());
