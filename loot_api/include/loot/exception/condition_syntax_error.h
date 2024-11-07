@@ -32,9 +32,9 @@ namespace loot {
  * @brief An exception class thrown if invalid syntax is encountered when
  *        parsing a metadata condition.
  */
-class ConditionSyntaxError : public std::system_error {
+class ConditionSyntaxError : public std::runtime_error {
 public:
-  using std::system_error::system_error;
+  using std::runtime_error::runtime_error;
 };
 }
 
