@@ -14,7 +14,8 @@ const char *convertEdgeType(loot::EdgeType edgeType) {
     { loot::EdgeType::userRequirement, "userlistRequirement" },
     { loot::EdgeType::assetOverlap, "assetOverlap" },
     { loot::EdgeType::recordOverlap, "recordOverlap" },
-    { loot::EdgeType::tieBreak, "tieBreak" }
+    { loot::EdgeType::tieBreak, "tieBreak" },
+    { loot::EdgeType::blueprintMaster, "blueprintMaster" }
   };
 
   auto iter = edgeMap.find(edgeType);
