@@ -116,6 +116,7 @@ loot::GameType convertGameId(const Napi::Env &env, const std::string &gameId) {
   std::map<std::string, loot::GameType> gameMap{
     { "morrowind", loot::GameType::tes3 },
     { "oblivion", loot::GameType::tes4 },
+    { "oblivionremastered", loot::GameType::oblivionRemastered },
     { "skyrim", loot::GameType::tes5 },
     { "skyrimse", loot::GameType::tes5se },
     { "skyrimvr", loot::GameType::tes5vr },
