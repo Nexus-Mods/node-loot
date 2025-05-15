@@ -28,6 +28,7 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "loot/metadata/message.h"
@@ -44,7 +45,8 @@ public:
   /**
    * Get the plugin's filename.
    * @return The plugin filename. If the plugin was ghosted when it was loaded,
-   *         this filename will be without the .ghost suffix.
+   *         this filename will be without the .ghost suffix, unless the game is
+   *         OpenMW, in which case ghosted plugins are not supported.
    */
   virtual std::string GetName() const = 0;
 
@@ -78,7 +80,7 @@ public:
    * @return A set of Bash Tags. The order of elements in the set holds no
    *         semantics.
    */
-  virtual std::vector<Tag> GetBashTags() const = 0;
+  virtual std::vector<std::string> GetBashTags() const = 0;
 
   /**
    * Get the plugin's CRC-32 checksum.
@@ -88,8 +90,19 @@ public:
   virtual std::optional<uint32_t> GetCRC() const = 0;
 
   /**
-   * Check if the plugin's master flag is set.
-   * @return True if the master flag is set, false otherwise.
+   * Check if the plugin is a master plugin.
+   *
+   * What causes a plugin to be a master plugin varies by game, but is usually
+   * indicated by the plugin having its master flag set and/or by its file
+   * extension. However, OpenMW uses neither for determining plugins' load order
+   * so all OpenMW plugins are treated as non-masters.
+   *
+   * The term "master" is potentially confusing: a plugin A may not be a *master
+   * plugin*, but may still be a *master of* another plugin by being listed as
+   * such in that plugin's header record. Master plugins are sometimes referred
+   * to as *master files* or simply *masters*, while the other meaning is always
+   * referenced in relation to another plugin.
+   * @return True if the plugin is a master plugin, false otherwise.
    */
   virtual bool IsMaster() const = 0;
 

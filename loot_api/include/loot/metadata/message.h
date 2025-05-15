@@ -25,6 +25,7 @@
 #define LOOT_METADATA_MESSAGE
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "loot/api_decorator.h"
@@ -41,7 +42,6 @@ public:
   /**
    * Construct a Message object of type 'say' with blank content and condition
    * strings.
-   * @return A Message object.
    */
   LOOT_API Message() = default;
 
@@ -54,11 +54,10 @@ public:
    *         The English message content text.
    * @param  condition
    *         A condition string.
-   * @return A Message object.
    */
   LOOT_API explicit Message(const MessageType type,
-                            const std::string& content,
-                            const std::string& condition = "");
+                            std::string_view content,
+                            std::string_view condition = "");
 
   /**
    * Construct a Message object with the given type, content and condition
@@ -69,11 +68,10 @@ public:
    *         The message content. If multilingual, one language must be English.
    * @param  condition
    *         A condition string.
-   * @return A Message object.
    */
   LOOT_API explicit Message(const MessageType type,
                             const std::vector<MessageContent>& content,
-                            const std::string& condition = "");
+                            std::string_view condition = "");
 
   /**
    * Get the message type.

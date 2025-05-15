@@ -25,6 +25,7 @@
 #define LOOT_METADATA_TAG
 
 #include <string>
+#include <string_view>
 
 #include "loot/api_decorator.h"
 #include "loot/metadata/conditional_metadata.h"
@@ -38,7 +39,6 @@ public:
   /**
    * Construct a Tag object with an empty tag name suggested for addition, with
    * an empty condition string.
-   * @return A Tag object.
    */
   LOOT_API explicit Tag() = default;
 
@@ -51,11 +51,10 @@ public:
    *         True if the tag should be added, false if it should be removed.
    * @param  condition
    *         A condition string.
-   * @return A Tag object.
    */
-  LOOT_API explicit Tag(const std::string& tag,
+  LOOT_API explicit Tag(std::string_view tag,
                         const bool isAddition = true,
-                        const std::string& condition = "");
+                        std::string_view condition = "");
 
   /**
    * Check if the tag should be added.

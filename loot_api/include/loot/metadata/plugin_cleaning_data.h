@@ -27,6 +27,7 @@
 
 #include <cstdint>
 #include <string>
+#include <string_view>
 
 #include "loot/api_decorator.h"
 #include "loot/metadata/message.h"
@@ -42,7 +43,6 @@ public:
    * Construct a PluginCleaningData object with zero CRC, ITM count, deleted
    * reference count and deleted navmesh count values, an empty utility string
    * and no detail.
-   * @return A PluginCleaningData object.
    */
   LOOT_API PluginCleaningData() = default;
 
@@ -54,10 +54,9 @@ public:
    *         The CRC of a plugin.
    * @param  utility
    *         The utility that the plugin cleanliness was checked with.
-   * @return A PluginCleaningData object.
    */
   LOOT_API explicit PluginCleaningData(uint32_t crc,
-                                       const std::string& utility);
+                                       std::string_view utility);
 
   /**
    * Construct a PluginCleaningData object with the given values.
@@ -74,11 +73,10 @@ public:
    *         The number of deleted references found in the plugin.
    * @param  nav
    *         The number of deleted navmeshes found in the plugin.
-   * @return A PluginCleaningData object.
    */
   LOOT_API explicit PluginCleaningData(
       uint32_t crc,
-      const std::string& utility,
+      std::string_view utility,
       const std::vector<MessageContent>& detail,
       unsigned int itm,
       unsigned int ref,
