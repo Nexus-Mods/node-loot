@@ -190,7 +190,9 @@ Napi::Value Loot::loadLists(const Napi::CallbackInfo &info) {
     } else {
       db.LoadMasterlistWithPrelude(masterlistPath, preludePath);
     }
-    db.LoadUserlist(userlistPath);
+    if (!userlistPath.empty()) {
+      db.LoadUserlist(userlistPath);
+    }
   } catch (const std::filesystem::filesystem_error &e) {
     throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str());
   } catch (const std::exception &e) {
@@ -293,12 +295,8 @@ Napi::Value Loot::getPlugin(const Napi::CallbackInfo &info) {
 Napi::Value Loot::sortPlugins(const Napi::CallbackInfo &info) {
   std::vector<std::string> plugins;
   unpackArgs(info, plugins);
-  std::vector<std::string> pluginPaths;
-  std::transform(plugins.begin(), plugins.end(), std::back_inserter(pluginPaths), [](const std::string& str) {
-    return std::filesystem::path(str).string();
-  });
   try {
-    return toNAPI(info.Env(), m_Game->SortPlugins(pluginPaths));
+    return toNAPI(info.Env(), m_Game->SortPlugins(plugins));
   } catch (loot::CyclicInteractionError &e) {
     throw CyclicalInteractionException(info.Env(), e);
   } catch (const std::filesystem::filesystem_error &e) {
