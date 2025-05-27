@@ -25,6 +25,7 @@
 #define LOOT_METADATA_FILE
 
 #include <string>
+#include <string_view>
 
 #include "loot/api_decorator.h"
 #include "loot/metadata/conditional_metadata.h"
@@ -39,7 +40,6 @@ class File : public ConditionalMetadata {
 public:
   /**
    * Construct a File with blank name, display and condition strings.
-   * @return A File object.
    */
   LOOT_API File() = default;
 
@@ -56,12 +56,15 @@ public:
    *         The detail message content, which may be appended to any messages
    *         generated for this file. If multilingual, one language must be
    *         English.
-   * @return A File object.
+   * @param  constraint
+   *         A condition string that must evaluate to true for the file's existence
+   *         to be recognised.
    */
-  LOOT_API explicit File(const std::string& name,
-                         const std::string& display = "",
-                         const std::string& condition = "",
-                         const std::vector<MessageContent>& detail = {});
+  LOOT_API explicit File(std::string_view name,
+                         std::string_view display = "",
+                         std::string_view condition = "",
+                         const std::vector<MessageContent>& detail = {},
+                         std::string_view constraint = "");
 
   /**
    * Get the filename of the file.
@@ -84,10 +87,17 @@ public:
    */
   LOOT_API std::vector<MessageContent> GetDetail() const;
 
+  /**
+   * Get the constraint that applies to the file.
+   * @return The file's constraint.
+   */
+  LOOT_API std::string GetConstraint() const;
+
 private:
   Filename name_;
   std::string display_;
   std::vector<MessageContent> detail_;
+  std::string constraint_;
 };
 
 /**

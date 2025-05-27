@@ -25,6 +25,7 @@
 #define LOOT_METADATA_LOCATION
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "loot/api_decorator.h"
@@ -37,7 +38,6 @@ class Location {
 public:
   /**
    * Construct a Location with empty URL and name strings.
-   * @return A Location object.
    */
   LOOT_API Location() = default;
 
@@ -47,10 +47,9 @@ public:
    *         The URL at which the plugin can be found.
    * @param  name
    *         A name for the URL, eg. the page or site name.
-   * @return A Location object.
    */
-  LOOT_API explicit Location(const std::string& url,
-                             const std::string& name = "");
+  LOOT_API explicit Location(std::string_view url,
+                             std::string_view name = "");
 
   /**
    * Get the object's URL.

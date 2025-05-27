@@ -25,6 +25,7 @@
 #define LOOT_METADATA_FILENAME
 
 #include <string>
+#include <string_view>
 
 #include "loot/api_decorator.h"
 
@@ -36,15 +37,13 @@ class Filename {
 public:
   /**
    * Construct a Filename using an empty string.
-   * @return A Filename object.
    */
   LOOT_API Filename() = default;
 
   /**
    * Construct a Filename using the given string.
-   * @return A Filename object.
    */
-  LOOT_API explicit Filename(const std::string& filename);
+  LOOT_API explicit Filename(std::string_view filename);
 
   /**
    * Get this Filename as a string.

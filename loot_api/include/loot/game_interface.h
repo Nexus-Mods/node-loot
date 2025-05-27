@@ -25,6 +25,7 @@
 #define LOOT_GAME_INTERFACE
 
 #include "loot/database_interface.h"
+#include "loot/enum/game_type.h"
 #include "loot/plugin_interface.h"
 
 namespace loot {
@@ -41,9 +42,11 @@ public:
 
   /**
    * @brief   Gets the currently-set additional data paths.
-   * @details Only Fallout 4 installed from the Microsoft Store is configured
-   *          with any additional data paths by default, as its DLC directories
-   *          are installed outside of the Fallout 4 install path.
+   * @details The following games are configured with additional data paths by
+   *          default:
+   *          - Fallout 4, when installed from the Microsoft Store
+   *          - Starfield
+   *          - OpenMW
    */
   virtual std::vector<std::filesystem::path> GetAdditionalDataPaths() const = 0;
 
@@ -52,8 +55,9 @@ public:
    * @details The additional data paths are used when interacting with the load
    *          order, evaluating conditions and scanning for archives (BSA/BA2
    *          depending on the game). Additional data paths are used in the
-   *          order they are given, and take precedence over the game's main
-   *          data path.
+   *          order they are given (except with OpenMW, which checks them in
+   *          reverse order), and take precedence over the game's main data
+   *          path.
    */
   virtual void SetAdditionalDataPaths(
       const std::vector<std::filesystem::path>& additionalDataPaths) = 0;
@@ -87,9 +91,9 @@ public:
 
   /**
    * @brief Check if a file is a valid plugin.
-   * @details The validity check is not exhaustive: it checks that the file
-   *          extension is ``.esm`` or ``.esp`` (after trimming any ``.ghost``
-   *          extension), and that the ``TES4`` header can be parsed.
+   * @details The validity check is not exhaustive: it generally checks that the
+   *          file is a valid plugin file extension for the game and that its
+   *          header (if applicable) can be parsed.
    * @param  pluginPath
    *         The path to the file to check. Relative paths are resolved relative
    *         to the game's plugins directory, while absolute paths are used
@@ -100,40 +104,56 @@ public:
 
   /**
    * @brief Parses plugins and loads their data.
-   * @details Any previously-loaded plugin data is discarded when this function
-   *          is called.
+   * @details If a given plugin filename (or one that is case-insensitively
+   *          equal) has already been loaded, its previously-loaded data
+   *          data is discarded, invalidating any existing shared pointers to
+   *          that plugin's PluginInterface object.
+   *
+   *          If the game is Morrowind, OpenMW or Starfield, it's only valid to
+   *          fully load a plugin if its masters are already loaded or included
+   *          in the same input vector.
    * @param pluginPaths
    *        The plugin paths to load. Relative paths are resolved relative to
    *        the game's plugins directory, while absolute paths are used as
    *        given. Each plugin filename must be unique within the vector.
    * @param loadHeadersOnly
-   *        If true, only the plugins' ``TES4`` headers are loaded. If false,
-   *        all records in the plugins are parsed, apart from the main master
-   *        file if it has been identified by a previous call to
-   *        ``IdentifyMainMasterFile()``.
+   *        If true, only the plugins' headers are loaded. If false, all records
+   *        in the plugins are parsed.
    */
   virtual void LoadPlugins(
       const std::vector<std::filesystem::path>& pluginPaths,
       bool loadHeadersOnly) = 0;
 
   /**
+   * @brief Clears the plugins loaded by previous calls to `LoadPlugins()`.
+   * @details This invalidates any PluginInterface pointers retrieved using
+   *          `GetPlugin()` or `GetLoadedPlugins()`.
+   */
+  virtual void ClearLoadedPlugins() = 0;
+
+  /**
    * @brief Get data for a loaded plugin.
    * @param  pluginName
    *         The filename of the plugin to get data for.
    * @returns A shared pointer to a const PluginInterface implementation. The
-   *          pointer is null if the given plugin has not been loaded.
+   *          pointer is null if the given plugin has not been loaded. The
+   *          pointer remains valid until the `ClearLoadedPlugins()` function
+   *          is called, this GameInterface is destroyed, or until a plugin with
+   *          a case-insensitively equal filename is loaded.
    */
-  virtual const PluginInterface* GetPlugin(
-      const std::string& pluginName) const = 0;
+  virtual std::shared_ptr<const PluginInterface> GetPlugin(
+      std::string_view pluginName) const = 0;
 
   /**
    * @brief Get a set of const references to all loaded plugins' PluginInterface
    *        objects.
-   * @returns A set of const PluginInterface references. The references remain
-   *          valid until the ``LoadPlugins()`` or ``SortPlugins()`` functions
-   *          are next called or this GameInterface is destroyed.
+   * @returns A set of shared pointers to const PluginInterface. The pointers
+   *          remain valid until the `ClearLoadedPlugins()` function is called,
+   *          this GameInterface is destroyed, or until a plugin with a
+   *          case-insensitively equal filename is loaded.
    */
-  virtual std::vector<const PluginInterface*> GetLoadedPlugins() const = 0;
+  virtual std::vector<std::shared_ptr<const PluginInterface>> GetLoadedPlugins()
+      const = 0;
 
   /**
    *  @}
@@ -142,29 +162,20 @@ public:
    */
 
   /**
-   *  @brief Identify the game's main master file.
-   *  @details When sorting, LOOT always only loads the headers of the game's
-   *           main master file as a performance optimisation.
-   */
-  virtual void IdentifyMainMasterFile(const std::string& masterFile) = 0;
-
-  /**
    *  @brief Calculates a new load order for the game's installed plugins
    *         (including inactive plugins) and outputs the sorted order.
    *  @details Pulls metadata from the masterlist and userlist if they are
    *           loaded, and reads the contents of each plugin. No changes are
    *           applied to the load order used by the game. This function does
    *           not load or evaluate the masterlist or userlist.
-   *  @param pluginPaths
-   *         The plugin paths to sort, in their current load order. Relative
-   *         paths are resolved relative to the game's plugins directory, while
-   *         absolute paths are used as given. Each plugin filename must be
-   *         unique within the vector.
+   *  @param pluginFilenames
+   *         The plugins to sort, in their current load order. All given plugins
+   *         must have been loaded using `LoadPlugins()`.
    *  @returns A vector of the given plugin filenames in their sorted load
    *           order.
    */
   virtual std::vector<std::string> SortPlugins(
-      const std::vector<std::filesystem::path>& pluginPaths) = 0;
+      const std::vector<std::string>& pluginFilenames) = 0;
 
   /**
    *  @}
@@ -219,6 +230,9 @@ public:
 
   /**
    * @brief Set the game's load order.
+   * @details There is no way to persist the load order of inactive OpenMW
+   *          plugins, so setting an OpenMW load order will have no effect if
+   *          the relative order of active plugins is unchanged.
    * @param loadOrder
    *        A vector of plugin filenames sorted in the load order to set.
    */

@@ -116,6 +116,7 @@ loot::GameType convertGameId(const Napi::Env &env, const std::string &gameId) {
   std::map<std::string, loot::GameType> gameMap{
     { "morrowind", loot::GameType::tes3 },
     { "oblivion", loot::GameType::tes4 },
+    { "oblivionremastered", loot::GameType::oblivionRemastered },
     { "skyrim", loot::GameType::tes5 },
     { "skyrimse", loot::GameType::tes5se },
     { "skyrimvr", loot::GameType::tes5vr },
@@ -154,7 +155,7 @@ Loot::Loot(const Napi::CallbackInfo &info)
       jsCallback.Call({ Napi::Number::New(env, std::get<0>(*value)), Napi::String::New(env, std::get<1>(*value)) });
     };
 
-    loot::SetLoggingCallback([&info, this, mainThreadCB](loot::LogLevel level, const char *message) {
+    loot::SetLoggingCallback([&info, this, mainThreadCB](loot::LogLevel level, std::string_view message) {
       auto data = new std::tuple(static_cast<int>(level), std::string(message));
       this->m_LogCallback.BlockingCall(data, mainThreadCB);
     });
@@ -174,13 +175,24 @@ Loot::Loot(const Napi::CallbackInfo &info)
 
 
 Napi::Value Loot::loadLists(const Napi::CallbackInfo &info) {
+  /*
+   * As of libloot 0.26.0 the loadLists function has been split into
+   * loadMasterlist, loadMasterlistWithPrelude and loadUserlist.
+   * We're going to consolidate both calls in this function for now.
+  */
   std::wstring masterlistPath, userlistPath, preludePath;
   unpackArgs(info, masterlistPath, userlistPath, preludePath);
 
   try {
     loot::DatabaseInterface &db = m_Game->GetDatabase();
-    db.LoadLists(masterlistPath, userlistPath, preludePath);
-    // m_Game->GetDatabase()->LoadLists(masterlistPath, userlistPath);
+    if (preludePath.empty()) {
+      db.LoadMasterlist(masterlistPath);
+    } else {
+      db.LoadMasterlistWithPrelude(masterlistPath, preludePath);
+    }
+    if (!userlistPath.empty()) {
+      db.LoadUserlist(userlistPath);
+    }
   } catch (const std::filesystem::filesystem_error &e) {
     throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str());
   } catch (const std::exception &e) {
@@ -283,12 +295,8 @@ Napi::Value Loot::getPlugin(const Napi::CallbackInfo &info) {
 Napi::Value Loot::sortPlugins(const Napi::CallbackInfo &info) {
   std::vector<std::string> plugins;
   unpackArgs(info, plugins);
-  std::vector<std::filesystem::path> pluginPaths;
-  std::transform(plugins.begin(), plugins.end(), std::back_inserter(pluginPaths), [](const std::string& str) {
-    return std::filesystem::path(str);
-  });
   try {
-    return toNAPI(info.Env(), m_Game->SortPlugins(pluginPaths));
+    return toNAPI(info.Env(), m_Game->SortPlugins(plugins));
   } catch (loot::CyclicInteractionError &e) {
     throw CyclicalInteractionException(info.Env(), e);
   } catch (const std::filesystem::filesystem_error &e) {
