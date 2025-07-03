@@ -3,6 +3,23 @@ const path = require('path');
 
 const { Loot, IsCompatible } = require('./build/Release/node-loot');
 
+// interface IPluginsNotLoadedArgs {
+//   name: string;
+//   plugin: string;
+//   func: string;
+//   currentlyLoaded: string[];
+// }
+class PluginNotLoaded extends Error {
+  constructor(args) {
+    super(`Plugin not loaded: "${args.plugin}"; currently loaded: ${args.currentlyLoaded.join(', ')}`);
+    Error.captureStackTrace(this, this.constructor);
+    this.name = this.constructor.name;
+    this.plugin = args.plugin;
+    this.func = args.func;
+    this.currentlyLoaded = args.currentlyLoaded || [];
+  }
+}
+
 class AlreadyClosed extends Error {
   constructor() {
     super('Already closed');
@@ -222,6 +239,8 @@ class LootAsync {
           let err;
           if (extraArgs.name === 'AlreadyClosed') {
             err = new AlreadyClosed();
+          } else if (extraArgs.name === 'PluginNotLoaded') {
+            err = new PluginNotLoaded(extraArgs);
           } else {
             err = new Error(msg.error);
           }

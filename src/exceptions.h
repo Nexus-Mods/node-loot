@@ -24,5 +24,7 @@ Napi::Error InvalidParameter(const Napi::Env &env, const char *func, const char 
 
 Napi::Error LOOTError(const Napi::Env &env, const char *func, const char *what);
 
+Napi::Error PluginNotLoaded(const Napi::Env &env, const char *func, const char *what);
+Napi::Error PluginNotLoaded(const Napi::Env &env, const char *func, const char *what, const std::optional<std::vector<std::shared_ptr<const loot::PluginInterface>>>& currentlyLoaded);
 
 
