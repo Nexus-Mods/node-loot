@@ -22,7 +22,6 @@ Napi::Value toNAPI<loot::Tag>(const Napi::Env &env, const loot::Tag &input) {
   res.Set("condition", input.GetCondition());
   res.Set("name", input.GetName());
   res.Set("isAddition", input.IsAddition());
-  res.Set("isConditional", input.IsConditional());
 
   return res;
 }
@@ -43,7 +42,6 @@ Napi::Value toNAPI<loot::Message>(const Napi::Env &env, const loot::Message &inp
   res.Set("condition", input.GetCondition());
   res.Set("content", toNAPI(env, input.GetContent()));
   res.Set("type", static_cast<unsigned int>(input.GetType()));
-  res.Set("isConditional", input.IsConditional());
 
   return res;
 }
@@ -67,7 +65,6 @@ Napi::Value toNAPI<loot::File>(const Napi::Env &env, const loot::File &input) {
   res.Set("condition", input.GetCondition());
   res.Set("displayName", input.GetDisplayName());
   res.Set("name", static_cast<std::string>(input.GetName()));
-  res.Set("isConditional", input.IsConditional());
 
   return res;
 }
@@ -286,6 +283,8 @@ Napi::Value Loot::getPlugin(const Napi::CallbackInfo &info) {
     return res;
   } catch (const std::filesystem::filesystem_error &e) {
     throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str());
+  } catch (const loot::PluginNotLoadedError &e) {
+    throw PluginNotLoaded(info.Env(), "getPlugin", e.what());
   } catch (const std::exception &e) {
     throw LOOTError(info.Env(), "getPlugin", e.what());
   }
@@ -301,6 +300,8 @@ Napi::Value Loot::sortPlugins(const Napi::CallbackInfo &info) {
     throw CyclicalInteractionException(info.Env(), e);
   } catch (const std::filesystem::filesystem_error &e) {
     throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str());
+  } catch (const loot::PluginNotLoadedError &e) {
+    throw PluginNotLoaded(info.Env(), "sortPlugins", e.what(), m_Game->GetLoadedPlugins());
   } catch (const std::exception &e) {
     throw LOOTError(info.Env(), "sortPlugins", e.what());
   }

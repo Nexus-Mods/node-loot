@@ -2,6 +2,7 @@
 #include "string_cast.h"
 #include "util.h"
 #include <napi.h>
+#include <optional>
 
 #ifdef WIN32
 #include <windows.h>
@@ -55,6 +56,7 @@ Napi::Error ExcWrap(const Napi::Env &env, const char *func, const std::exception
   return res;
 }
 
+
 Napi::Error UnsupportedGame(const Napi::Env & env) {
   return Napi::Error::New(env, "game not supported");
 }
@@ -65,10 +67,10 @@ Napi::Error BusyException(const Napi::Env & env) {
 
 Napi::Error CyclicalInteractionException(const Napi::Env &env, loot::CyclicInteractionError & err) {
   Napi::Error res = Napi::Error::New(env, err.what());
-
+  
   std::vector<loot::Vertex> errCycle = err.GetCycle();
   Napi::Array cycle = Napi::Array::New(env);
-
+  
   int idx = 0;
   for (const auto &iter : errCycle) {
     Napi::Object vert = Napi::Object::New(env);
@@ -78,7 +80,7 @@ Napi::Error CyclicalInteractionException(const Napi::Env &env, loot::CyclicInter
     cycle.Set(idx++, vert);
   }
   res.Set("cycle", cycle);
-
+  
   return res;
 }
 
@@ -87,13 +89,54 @@ Napi::Error InvalidParameter(const Napi::Env &env, const char *func, const char 
   res.Set("arg", arg);
   res.Set("value", value);
   res.Set("func", func);
-
+  
   return res;
 }
 
 Napi::Error LOOTError(const Napi::Env &env, const char *func, const char *what) {
   Napi::Error res = Napi::Error::New(env, what);
   res.Set("func", func);
+  
+  return res;
+}
+
+Napi::Error PluginNotLoaded(const Napi::Env &env, const char *func, const char *what) {
+  return PluginNotLoaded(env, func, what, std::nullopt);
+}
+
+Napi::Error PluginNotLoaded(
+  const Napi::Env &env,
+  const char* func,
+  const char* what,
+  const std::optional<std::vector<std::shared_ptr<const loot::PluginInterface>>>& currentlyLoaded = std::nullopt
+) {
+  Napi::Error res = Napi::Error::New(env, what);
+  std::string errorStr(what);
+  std::string pluginName;
+  size_t start = errorStr.find('"');
+  if (start != std::string::npos) {
+    size_t end = errorStr.find('"', start + 1);
+    if (end != std::string::npos && end > start + 1) {
+      pluginName = errorStr.substr(start + 1, end - start - 1);
+    }
+  }
+  res.Set("name", "PluginNotLoaded");
+  res.Set("plugin", pluginName);
+  res.Set("func", func);
+
+  // Convert currentlyLoaded to an array of plugin names if provided
+  if (currentlyLoaded.has_value()) {
+    const auto& loaded = currentlyLoaded.value();
+    Napi::Array arr = Napi::Array::New(env, loaded.size());
+    for (size_t i = 0; i < loaded.size(); ++i) {
+      if (loaded[i]) {
+        arr.Set(i, loaded[i]->GetName());
+      } else {
+        arr.Set(i, env.Null());
+      }
+    }
+    res.Set("currentlyLoaded", arr);
+  }
 
   return res;
 }
