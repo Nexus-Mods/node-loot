@@ -71,7 +71,6 @@ export class Message {
 	type: number;
 	content: string | Array<{ text: string, language: string }>;
 	condition: string;
-	isConditional: boolean;
 }
 
 export class MessageContent {
@@ -103,7 +102,6 @@ export class PluginMetadata {
 
 export class Tag {
 	isAddition: boolean;
-	isConditional: boolean;
 	name: string;
 	condition: string;
 }
