@@ -35,7 +35,7 @@
             },
             'msbuild_settings': {
                 "ClCompile": {
-                    'AdditionalOptions': ['-std:c++17', '/Ob2', '/Oi', '/Ot', '/Oy', '/GL', '/GF', '/Gy']
+                    'AdditionalOptions': ['-std:c++20', '/Ob2', '/Oi', '/Ot', '/Oy', '/GL', '/GF', '/Gy']
                 }
             },
             "conditions": [
