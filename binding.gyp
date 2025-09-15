@@ -30,12 +30,13 @@
               'VCCLCompilerTool': {
                 'ExceptionHandling': 1,
                 'RuntimeLibrary': 2,
-                'Optimization': 0
+                'Optimization': 0,
+                'AdditionalOptions': ['/std:c++20', '/Zc:__cplusplus']
               },
             },
             'msbuild_settings': {
                 "ClCompile": {
-                    'AdditionalOptions': ['-std:c++20', '/Ob2', '/Oi', '/Ot', '/Oy', '/GL', '/GF', '/Gy']
+                    'AdditionalOptions': ['/std:c++20', '/Zc:__cplusplus', '/Ob2', '/Oi', '/Ot', '/Oy', '/GL', '/GF', '/Gy']
                 }
             },
             "conditions": [
