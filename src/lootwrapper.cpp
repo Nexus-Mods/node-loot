@@ -161,7 +161,7 @@ Loot::Loot(const Napi::CallbackInfo &info)
     auto gameId = convertGameId(info.Env(), game);
     m_Game = loot::CreateGameHandle(gameId, std::filesystem::path(gamePath), std::filesystem::path(gameLocalPath));
   } catch (const std::filesystem::filesystem_error &e) {
-    throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str());
+    throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, reinterpret_cast<const char*>(e.path1().generic_u8string().c_str()));
   } catch (const std::exception &e) {
     throw ExcWrap(info.Env(), __FUNCTION__, e);
   }
@@ -191,7 +191,7 @@ Napi::Value Loot::loadLists(const Napi::CallbackInfo &info) {
       db.LoadUserlist(userlistPath);
     }
   } catch (const std::filesystem::filesystem_error &e) {
-    throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str());
+    throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, reinterpret_cast<const char*>(e.path1().generic_u8string().c_str()));
   } catch (const std::exception &e) {
     throw LOOTError(info.Env(), "loadLists", e.what());
   }
@@ -209,7 +209,7 @@ Napi::Value Loot::loadPlugins(const Napi::CallbackInfo &info) {
   try {
     m_Game->LoadPlugins(pluginPaths, headersOnly);
   } catch (const std::filesystem::filesystem_error &e) {
-    throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str());
+    throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, reinterpret_cast<const char*>(e.path1().generic_u8string().c_str()));
   } catch (const std::exception &e) {
     throw LOOTError(info.Env(), "loadPlugins", e.what());
   }
@@ -242,7 +242,7 @@ Napi::Value Loot::getPluginMetadata(const Napi::CallbackInfo &info) {
       return res;
     }
   } catch (const std::filesystem::filesystem_error &e) {
-    throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str());
+    throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, reinterpret_cast<const char*>(e.path1().generic_u8string().c_str()));
   } catch (const std::exception &e) {
     throw LOOTError(info.Env(), "getPluginMetadata", e.what());
   }
@@ -282,7 +282,7 @@ Napi::Value Loot::getPlugin(const Napi::CallbackInfo &info) {
     res.Set("loadsArchive", plugin->LoadsArchive());
     return res;
   } catch (const std::filesystem::filesystem_error &e) {
-    throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str());
+    throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, reinterpret_cast<const char*>(e.path1().generic_u8string().c_str()));
   } catch (const loot::PluginNotLoadedError &e) {
     throw PluginNotLoaded(info.Env(), "getPlugin", e.what());
   } catch (const std::exception &e) {
@@ -299,7 +299,7 @@ Napi::Value Loot::sortPlugins(const Napi::CallbackInfo &info) {
   } catch (loot::CyclicInteractionError &e) {
     throw CyclicalInteractionException(info.Env(), e);
   } catch (const std::filesystem::filesystem_error &e) {
-    throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, e.path1().generic_u8string().c_str());
+    throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, reinterpret_cast<const char*>(e.path1().generic_u8string().c_str()));
   } catch (const loot::PluginNotLoadedError &e) {
     throw PluginNotLoaded(info.Env(), "sortPlugins", e.what(), m_Game->GetLoadedPlugins());
   } catch (const std::exception &e) {

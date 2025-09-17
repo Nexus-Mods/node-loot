@@ -1,29 +1,29 @@
 {
   "name": "loot",
-  "version": "6.0.15",
+  "version": "6.1.1",
   "description": "Wrapper around the LOOT library for sorting plugins of gamebryo games (Oblivion, Skyrim, Fallout 3/NV/4)",
   "repository": {
     "type": "git",
     "url": "https://github.com/Nexus-Mods/node-loot.git"
   },
   "scripts": {
-    "upload": "prebuild.cmd -r napi -t 4 -a x64 --prepack codesign",
+    "upload": "prebuild -r napi -t 9 -a x64 --prepack codesign",
     "rebuild": "autogypi && node-gyp rebuild",
-    "install": "prebuild-install -r napi -t 4 -a x64 || npm run rebuild"
+    "install": "prebuild-install -r napi -t 9 -a x64 || npm run rebuild"
   },
   "author": "Black Tree Gaming Ltd.",
   "license": "GPL-3.0",
   "binary": {
-    "napi_versions": [4]
+    "napi_versions": [9]
   },
   "devDependencies": {
-    "prebuild": "^11.0.3"
+    "prebuild": "^13.0.1"
   },
   "dependencies": {
     "autogypi": "^0.2.2",
     "lodash": "^4.17.21",
-    "node-addon-api": "*",
-    "node-gyp": "^9.0.0",
-    "prebuild-install": "7.1.0"
+    "node-addon-api": "^8.1.0",
+    "node-gyp": "^10.2.0",
+    "prebuild-install": "^7.1.2"
   }
 }
