@@ -108,11 +108,18 @@ class LootAsync {
       this.ipc.listen(`\\\\?\\pipe\\loot-ipc-${this.id}`, () => {
         this.ipc.on('connection', socket => {
           this.socket = socket;
+          let dataBuffer = '';
           socket
           .on('data', data => {
             try {
-              const messages = data.toString().split('\uFFFF').filter(msg => msg.length > 0);
-              messages.forEach(msg => this.handleResponse(JSON.parse(msg)));
+              dataBuffer += data.toString();
+              const messages = dataBuffer.split('\uFFFF');
+              if (dataBuffer.endsWith('\uFFFF')) {
+                dataBuffer = '';
+              } else {
+                dataBuffer = messages.pop(); // Keep incomplete chunk
+              }
+              messages.filter(msg => msg.length > 0).forEach(msg => this.handleResponse(JSON.parse(msg)));
             } catch (err) {
               this.logCallback(4, err.message);
             }
