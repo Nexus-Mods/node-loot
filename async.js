@@ -7,11 +7,18 @@ process.on('uncaughtException', error => {
   process.exit(1);
 });
 
+const CHUNK_SIZE = 32 * 1024;
+
 const client = net.connect(`\\\\?\\pipe\\loot-ipc-${process.argv[2]}`, (arg) => {
   let instance;
+  let dataBuffer = '';
 
   function send(args) {
-    client.write(JSON.stringify(args) + '\uFFFF');
+    const message = JSON.stringify(args) + '\uFFFF';
+    // Chunk large messages to avoid Windows named pipe size limits
+    for (let i = 0; i < message.length; i += CHUNK_SIZE) {
+      client.write(message.slice(i, i + CHUNK_SIZE));
+    }
   }
 
   function handleEvent(event) {
@@ -40,7 +47,20 @@ const client = net.connect(`\\\\?\\pipe\\loot-ipc-${process.argv[2]}`, (arg) => 
   }
 
   client.on('data', buffer => {
-    handleEvent(JSON.parse(buffer.toString()));
+    dataBuffer += buffer.toString();
+    const messages = dataBuffer.split('\uFFFF');
+    // Keep incomplete chunk (last element after split if no trailing delimiter)
+    if (!dataBuffer.endsWith('\uFFFF')) {
+      dataBuffer = messages.pop();
+    } else {
+      dataBuffer = '';
+    }
+    // Process each complete message
+    for (const msg of messages) {
+      if (msg.length > 0) {
+        handleEvent(JSON.parse(msg));
+      }
+    }
   });
 
   // signal readiness to process messages

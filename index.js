@@ -3,6 +3,8 @@ const path = require('path');
 
 const { Loot, IsCompatible } = require('./build/Release/node-loot');
 
+const CHUNK_SIZE = 32 * 1024;
+
 // interface IPluginsNotLoadedArgs {
 //   name: string;
 //   plugin: string;
@@ -57,6 +59,7 @@ class LootAsync {
     this.queue = [];
     this.logCallback = logCallback;
     this.didClose = false;
+    this.dataBuffer = '';
     if (onFork !== undefined) {
       this.onFork = onFork;
     } else {
@@ -108,18 +111,23 @@ class LootAsync {
       this.ipc.listen(`\\\\?\\pipe\\loot-ipc-${this.id}`, () => {
         this.ipc.on('connection', socket => {
           this.socket = socket;
-          let dataBuffer = '';
           socket
           .on('data', data => {
             try {
-              dataBuffer += data.toString();
-              const messages = dataBuffer.split('\uFFFF');
-              if (dataBuffer.endsWith('\uFFFF')) {
-                dataBuffer = '';
+              this.dataBuffer += data.toString();
+              const messages = this.dataBuffer.split('\uFFFF');
+              // Keep incomplete chunk (last element after split if no trailing delimiter)
+              if (!this.dataBuffer.endsWith('\uFFFF')) {
+                this.dataBuffer = messages.pop();
               } else {
-                dataBuffer = messages.pop(); // Keep incomplete chunk
+                this.dataBuffer = '';
               }
-              messages.filter(msg => msg.length > 0).forEach(msg => this.handleResponse(JSON.parse(msg)));
+              // Process each complete message
+              for (const msg of messages) {
+                if (msg.length > 0) {
+                  this.handleResponse(JSON.parse(msg));
+                }
+              }
             } catch (err) {
               this.logCallback(4, err.message);
             }
@@ -216,7 +224,11 @@ class LootAsync {
       }
     };
     try {
-      this.socket.write(JSON.stringify(message), handleError);
+      const data = JSON.stringify(message) + '\uFFFF';
+      // Chunk large messages to avoid Windows named pipe size limits
+      for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+        this.socket.write(data.slice(i, i + CHUNK_SIZE), handleError);
+      }
     } catch (err) {
       handleError(err);
     }
