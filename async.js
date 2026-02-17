@@ -9,7 +9,7 @@ process.on('uncaughtException', error => {
 
 const CHUNK_SIZE = 32 * 1024;
 
-const client = net.connect(`\\\\?\\pipe\\loot-ipc-${process.argv[2]}`, (arg) => {
+const client = net.connect(process.argv[2], (arg) => {
   let instance;
   let dataBuffer = '';
 

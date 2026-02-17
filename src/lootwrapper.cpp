@@ -7,7 +7,7 @@
 #include <memory>
 #include <iostream>
 #include <clocale>
-#ifdef WIN32
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
@@ -136,7 +136,11 @@ Loot::Loot(const Napi::CallbackInfo &info)
   , m_LogCallback(Napi::ThreadSafeFunction::New(info.Env(), info[4].As<Napi::Function>(), "logcb", 0, 1))
 {
   std::string game, language;
+#ifdef _WIN32
   std::wstring gamePath, gameLocalPath;
+#else
+  std::string gamePath, gameLocalPath;
+#endif
   unpackArgs(info, game, gamePath, gameLocalPath, language);
 
   m_Language = language;
@@ -177,7 +181,11 @@ Napi::Value Loot::loadLists(const Napi::CallbackInfo &info) {
    * loadMasterlist, loadMasterlistWithPrelude and loadUserlist.
    * We're going to consolidate both calls in this function for now.
   */
+#ifdef _WIN32
   std::wstring masterlistPath, userlistPath, preludePath;
+#else
+  std::string masterlistPath, userlistPath, preludePath;
+#endif
   unpackArgs(info, masterlistPath, userlistPath, preludePath);
 
   try {
@@ -222,8 +230,6 @@ Napi::Value Loot::getPluginMetadata(const Napi::CallbackInfo &info) {
   unpackArgs<1>(info, pluginName, includeUserMetadata, evaluateConditions);
 
   try {
-    Napi::Value res = Napi::Object::New(info.Env());
-
     std::optional<loot::PluginMetadata> meta = m_Game->GetDatabase().GetPluginMetadata(pluginName, includeUserMetadata, evaluateConditions);
     if (meta.has_value()) {
       // previously throw an exception here but this is *not* an error, it happens for all plugins
@@ -305,6 +311,8 @@ Napi::Value Loot::sortPlugins(const Napi::CallbackInfo &info) {
   } catch (const std::exception &e) {
     throw LOOTError(info.Env(), "sortPlugins", e.what());
   }
+
+  return info.Env().Undefined();
 }
 
 Napi::Value Loot::setLoadOrder(const Napi::CallbackInfo &info) {
@@ -401,7 +409,7 @@ Napi::Value Loot::getGeneralMessages(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value SetErrorLanguageEN(const Napi::CallbackInfo &info) {
-#ifdef WIN32
+#ifdef _WIN32
   ULONG count = 1;
   WCHAR wszLanguages[32];
   wsprintfW(wszLanguages, L"%04X%c", MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT), 0);

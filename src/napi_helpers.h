@@ -91,6 +91,7 @@ void convertArg<std::string>(Tag<std::string>, std::string &out, const Napi::Cal
   out = fromNAPI<std::string>(info[idx]);
 }
 
+#ifdef _WIN32
 template<>
 void convertArg<std::wstring>(Tag<std::wstring>, std::wstring &out, const Napi::CallbackInfo &info, int idx) {
   if (!info[idx].IsString()) {
@@ -99,6 +100,7 @@ void convertArg<std::wstring>(Tag<std::wstring>, std::wstring &out, const Napi::
   out = fromNAPI<std::wstring>(info[idx]);
 }
 
+#endif
 template<>
 void convertArg<bool>(Tag<bool>, bool &out, const Napi::CallbackInfo &info, int idx) {
   if (!info[idx].IsBoolean()) {
@@ -126,7 +128,7 @@ void convertArg(Tag<std::vector<T>>, std::vector<T> &out, const Napi::CallbackIn
 
 template<size_t I = 0, typename T0, typename... TR>
 void convertRec(const Napi::CallbackInfo &info, int requiredCount, T0 &out, TR &... rest) {
-  if ((requiredCount > I) || (info.Length() > I)) {
+  if (((requiredCount > 0) && (static_cast<size_t>(requiredCount) > I)) || (info.Length() > I)) {
     convertArg(Tag<T0>(), out, info, I);
   }
   if constexpr (sizeof...(rest) > 0) {
