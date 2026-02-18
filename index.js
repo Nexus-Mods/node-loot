@@ -1,9 +1,33 @@
-net = require('net');
+const fs = require('fs');
+const net = require('net');
+const os = require('os');
 const path = require('path');
 
 const { Loot, IsCompatible } = require('./build/Release/node-loot');
 
 const CHUNK_SIZE = 32 * 1024;
+
+function getIpcPath(id) {
+  if (process.platform === 'win32') {
+    return `\\\\?\\pipe\\loot-ipc-${id}`;
+  }
+
+  return path.join(os.tmpdir(), `loot-ipc-${id}.sock`);
+}
+
+function cleanupIpcPath(ipcPath) {
+  if (process.platform === 'win32') {
+    return;
+  }
+
+  try {
+    fs.unlinkSync(ipcPath);
+  } catch (err) {
+    if (err.code !== 'ENOENT') {
+      throw err;
+    }
+  }
+}
 
 // interface IPluginsNotLoadedArgs {
 //   name: string;
@@ -104,11 +128,13 @@ class LootAsync {
     this.makeProxy('getGeneralMessages');
 
     this.id = this.generateId();
+    this.ipcPath = getIpcPath(this.id);
     this.ipc = new net.Server();
     try {
       // this seems to fail for some users with EINVAL. why?
       // May be a wine-only problem but that's not confirmed
-      this.ipc.listen(`\\\\?\\pipe\\loot-ipc-${this.id}`, () => {
+      cleanupIpcPath(this.ipcPath);
+      this.ipc.listen(this.ipcPath, () => {
         this.ipc.on('connection', socket => {
           this.socket = socket;
           socket
@@ -148,12 +174,12 @@ class LootAsync {
         initCallback(err);
       });
     } catch (err) {
-      initCallback(new Error('failed to establish pipe'));
+      initCallback(new Error('failed to establish IPC endpoint'));
     }
   }
 
   restart(callback) {
-    this.worker = this.onFork(`${__dirname}${path.sep}async.js`, [this.id]);
+    this.worker = this.onFork(`${__dirname}${path.sep}async.js`, [this.ipcPath]);
     this.currentCallback = () => {
       this.enqueue({
         type: 'init',
@@ -172,8 +198,18 @@ class LootAsync {
   }
 
   close() {
+    if (this.didClose) {
+      return;
+    }
+
     this.enqueue({ type: 'terminate' }, () => {
       this.worker = undefined;
+      if (this.ipc) {
+        this.ipc.close(() => cleanupIpcPath(this.ipcPath));
+        this.ipc = undefined;
+      } else {
+        cleanupIpcPath(this.ipcPath);
+      }
     });
     this.didClose = true;
   }

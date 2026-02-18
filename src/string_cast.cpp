@@ -1,6 +1,6 @@
 #include "string_cast.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 
 #define WIN32_LEAN_AND_MEAN
 #define _WINSOCKAPI_
@@ -81,7 +81,7 @@ std::wstring u8Tou16(const std::string & input) {
   return toWC(input.c_str(), CodePage::UTF8, input.length());
 }
 
-#else // WIN32
+#else // _WIN32
 std::string toWC(const char * const &source, CodePage codePage, size_t sourceLength) {
   return source;
 }

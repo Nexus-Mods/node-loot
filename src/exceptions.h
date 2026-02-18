@@ -1,9 +1,9 @@
 #pragma once
 
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
-#endif // WIN32
+#endif // _WIN32
 #include <exception>
 #include <napi.h>
 #include <loot/api.h>
