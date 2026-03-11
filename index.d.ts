@@ -59,6 +59,7 @@ export class LootAsync {
   setUserGroups(groups: Group[]);
   getGroupsPath(fromGroupName: string, toGroupName: string): Vertex[];
   getGeneralMessages(evaluateConditions: boolean): Message[];
+  setLogLevel(level: LogLevel, callback: (err: Error) => void): void;
 }
 
 export class MasterlistInfo {
@@ -129,4 +130,13 @@ export class PluginInterface {
 	loadsArchive: boolean;
 }
 
+export enum LogLevel {
+	trace = 0,
+	debug = 1,
+	info = 2,
+	warning = 3,
+	error = 4,
+}
+
 export function IsCompatible(major: number, minor: number, patch: number): boolean;
+export function SetLogLevel(level: LogLevel): void;

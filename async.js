@@ -1,6 +1,6 @@
 const net = require('net');
 
-const { Loot, SetErrorLanguageEN } = require('./build/Release/node-loot');
+const { Loot, SetErrorLanguageEN, SetLogLevel } = require('./build/Release/node-loot');
 
 process.on('uncaughtException', error => {
   console.error(error.message);
@@ -8,6 +8,8 @@ process.on('uncaughtException', error => {
 });
 
 const CHUNK_SIZE = 32 * 1024;
+
+let currentLogLevel = 2; // default: info (matches previous hardcoded filter)
 
 const client = net.connect(`\\\\?\\pipe\\loot-ipc-${process.argv[2]}`, (arg) => {
   let instance;
@@ -27,11 +29,20 @@ const client = net.connect(`\\\\?\\pipe\\loot-ipc-${process.argv[2]}`, (arg) => 
       if (event.type === 'init') {
         SetErrorLanguageEN();
         instance = new Loot(...event.args, logCallback);
+      } else if (event.type === 'setLogLevel') {
+        currentLogLevel = event.args[0];
+        SetLogLevel(event.args[0]);
       } else if (event.type === 'terminate') {
         send({});
         process.exit(0);
       } else {
-        result = instance[event.type](...event.args);
+        if (event.type === 'loadPlugins') {
+          SetLogLevel(4); // suppress BSA hash collision warnings during plugin loading
+          result = instance[event.type](...event.args);
+          SetLogLevel(currentLogLevel);
+        } else {
+          result = instance[event.type](...event.args);
+        }
       }
       send({ result });
     } catch (error) {
@@ -40,8 +51,7 @@ const client = net.connect(`\\\\?\\pipe\\loot-ipc-${process.argv[2]}`, (arg) => 
   }
 
   function logCallback(level, message) {
-    // don't relay trace and debug. Make this configurable in the future
-    if (level > 1) {
+    if (level >= currentLogLevel) {
       send({ log: { level, message } });
     }
   }

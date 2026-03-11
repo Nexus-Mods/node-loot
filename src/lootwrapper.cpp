@@ -410,6 +410,14 @@ Napi::Value SetErrorLanguageEN(const Napi::CallbackInfo &info) {
   return info.Env().Undefined();
 }
 
+Napi::Value SetLogLevel(const Napi::CallbackInfo &info) {
+  int level;
+  unpackArgs(info, level);
+
+  loot::SetLogLevel(static_cast<loot::LogLevel>(level));
+  return info.Env().Undefined();
+}
+
 Napi::Boolean IsCompatible(const Napi::CallbackInfo &info) {
   int major, minor, patch;
   unpackArgs(info, major, minor, patch);
@@ -419,6 +427,7 @@ Napi::Boolean IsCompatible(const Napi::CallbackInfo &info) {
 
 Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
   exports.Set("SetErrorLanguageEN", Napi::Function::New(env, SetErrorLanguageEN));
+  exports.Set("SetLogLevel", Napi::Function::New(env, SetLogLevel));
   exports.Set("IsCompatible", Napi::Function::New(env, IsCompatible));
   Loot::Init(env, exports);
   return exports;
