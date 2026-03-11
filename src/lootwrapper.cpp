@@ -394,10 +394,19 @@ Napi::Value Loot::getGeneralMessages(const Napi::CallbackInfo &info) {
   unpackArgs(info, evaluateConditions);
 
   try {
-    return toNAPI(info.Env(), m_Game->GetDatabase().GetGeneralMessages(evaluateConditions));
+    return toNAPI(info.Env(), m_Game->GetDatabase().GetGeneralMessages(true, evaluateConditions));
   } catch (const std::exception &e) {
     throw LOOTError(info.Env(), "getGeneralMessages", e.what());
   }
+}
+
+Napi::Value Loot::clearConditionCache(const Napi::CallbackInfo &info) {
+  try {
+    m_Game->GetDatabase().ClearConditionCache();
+  } catch (const std::exception &e) {
+    throw LOOTError(info.Env(), "clearConditionCache", e.what());
+  }
+  return info.Env().Undefined();
 }
 
 Napi::Value SetErrorLanguageEN(const Napi::CallbackInfo &info) {

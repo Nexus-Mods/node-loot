@@ -108,7 +108,7 @@ Napi::Error PluginNotLoaded(
   const Napi::Env &env,
   const char* func,
   const char* what,
-  const std::optional<std::vector<std::shared_ptr<const loot::PluginInterface>>>& currentlyLoaded = std::nullopt
+  const std::optional<std::vector<std::unique_ptr<const loot::PluginInterface>>>& currentlyLoaded = std::nullopt
 ) {
   Napi::Error res = Napi::Error::New(env, what);
   std::string errorStr(what);
