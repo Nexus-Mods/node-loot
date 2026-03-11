@@ -1,9 +1,17 @@
 net = require('net');
 const path = require('path');
 
-const { Loot, IsCompatible } = require('./build/Release/node-loot');
+const { Loot, IsCompatible, SetLogLevel } = require('./build/Release/node-loot');
 
 const CHUNK_SIZE = 32 * 1024;
+
+const LogLevel = {
+  trace: 0,
+  debug: 1,
+  info: 2,
+  warning: 3,
+  error: 4,
+};
 
 // interface IPluginsNotLoadedArgs {
 //   name: string;
@@ -102,6 +110,7 @@ class LootAsync {
     this.makeProxy('getUserGroups');
     this.makeProxy('setUserGroups');
     this.makeProxy('getGeneralMessages');
+    this.makeProxy('setLogLevel');
 
     this.id = this.generateId();
     this.ipc = new net.Server();
@@ -281,7 +290,9 @@ class LootAsync {
 
 module.exports = {
   AlreadyClosed,
+  LogLevel,
   Loot,
   LootAsync,
   IsCompatible,
+  SetLogLevel,
 };
