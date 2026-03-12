@@ -29,7 +29,8 @@ public:
       InstanceMethod("isPluginActive", &Loot::isPluginActive),
       InstanceMethod("setLoadOrder", &Loot::setLoadOrder),
       InstanceMethod("setUserGroups", &Loot::setUserGroups),
-      InstanceMethod("sortPlugins", &Loot::sortPlugins)
+      InstanceMethod("sortPlugins", &Loot::sortPlugins),
+      InstanceMethod("clearConditionCache", &Loot::clearConditionCache)
       });
     exports.Set("Loot", func);
     return exports;
@@ -64,6 +65,8 @@ public:
   Napi::Value setUserGroups(const Napi::CallbackInfo &info);
 
   Napi::Value sortPlugins(const Napi::CallbackInfo &info);
+
+  Napi::Value clearConditionCache(const Napi::CallbackInfo &info);
 
 private:
 

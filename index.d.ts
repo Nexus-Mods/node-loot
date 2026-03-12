@@ -35,6 +35,7 @@ export class Loot {
   setUserGroups(groups: Group[]);
   getGroupsPath(fromGroupName: string, toGroupName: string): Vertex[];
   getGeneralMessages(evaluateConditions: boolean): Message[];
+  clearConditionCache(): void;
 }
 
 export class LootAsync {
@@ -59,6 +60,7 @@ export class LootAsync {
   setUserGroups(groups: Group[]);
   getGroupsPath(fromGroupName: string, toGroupName: string): Vertex[];
   getGeneralMessages(evaluateConditions: boolean): Message[];
+  clearConditionCache(callback: (err: Error) => void): void;
   setLogLevel(level: LogLevel, callback: (err: Error) => void): void;
 }
 

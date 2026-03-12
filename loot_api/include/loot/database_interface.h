@@ -36,10 +36,108 @@
 #include "loot/metadata/plugin_metadata.h"
 
 namespace loot {
+struct MetadataWriteOptionsImpl;
+
+/** @brief Options to configure how metadata files are written. */
+class MetadataWriteOptions {
+public:
+  /**
+   * @brief Creates a new set of options, all initially set to `false`.
+   */
+  LOOT_API MetadataWriteOptions();
+  LOOT_API MetadataWriteOptions(const MetadataWriteOptions&);
+  LOOT_API MetadataWriteOptions(MetadataWriteOptions&&) noexcept;
+  LOOT_API ~MetadataWriteOptions();
+
+  LOOT_API MetadataWriteOptions& operator=(const MetadataWriteOptions&);
+  LOOT_API MetadataWriteOptions& operator=(MetadataWriteOptions&&) noexcept;
+
+  /**
+   * @brief Sets the option to overwrite the output file if it already exists.
+   * @details If true and the file path already exists, its contents will be
+   *          replaced.
+   *
+   *          If false and the file path already exists, an error will be
+   *          returned.
+   *
+   *          This setting has no effect if the file path does not exist.
+   * @param truncate
+   *        The value to set.
+   */
+  LOOT_API void SetTruncate(bool truncate);
+
+  /**
+   * @brief Sets the option to write YAML anchors and aliases.
+   * @details If true then conditions, constraints, files, file details, plugin
+   *          cleaning data details, messages and message contents that appear
+   *          more than once in the metadata will be deduplicated by including
+   *          a YAML anchor when writing the first occurrence of the value, and
+   *          writing YAML aliases in place of further occurrences.
+   *
+   *          If false, YAML anchors and aliases will not be used, so no
+   *          deduplication will occur.
+   * @param writeAnchors
+   *        The value to set.
+   */
+  LOOT_API void SetWriteAnchors(bool writeAnchors);
+
+  /**
+   * @brief Sets the option to write YAML anchors in a `common` section.
+   * @details If `writeAnchors` is true and this is also true, the document's
+   *          root-level map will start with a `common` key. Its value will be
+   *          a list of all the values for which YAML anchors will be written,
+   *          so that all YAML anchors will appear within that list.
+   *
+   *          This setting has no effect if `writeAnchors` is false.
+   * @param writeCommonSection
+   *        The value to set.
+   */
+  LOOT_API void SetWriteCommonSection(bool writeCommonSection);
+
+  /**
+   * @brief Sets the option to write anchors for File values that only have a
+   *        name.
+   * @details If `writeAnchors` is true and this is also true, then all
+   *          repeated File metadata values will be deduplicated using YAML
+   *          anchors and aliases.
+   *
+   *          If this is false, then only File metadata that is serialised as
+   *          a YAML object will be deduplicated (i.e. File values that only
+   *          have a name will not be deduplicated).
+   *
+   *          This setting has no effect if `writeAnchors` is false.
+   * @param anchorFileStrings
+   *        The value to set.
+   */
+  LOOT_API void SetAnchorFileStrings(bool anchorFileStrings);
+
+  /** Gets the current value of the truncate option. */
+  LOOT_API bool GetTruncate() const;
+
+  /** Gets the current value of the writeAnchors option. */
+  LOOT_API bool GetWriteAnchors() const;
+
+  /** Gets the current value of the writeCommonSection option. */
+  LOOT_API bool GetWriteCommonSection() const;
+
+  /** Gets the current value of the anchorFileStrings option. */
+  LOOT_API bool GetAnchorFileStrings() const;
+
+private:
+  std::unique_ptr<MetadataWriteOptionsImpl> pimpl_;
+};
+
 /** @brief The interface provided by API's database handle. */
 class DatabaseInterface {
 public:
+  DatabaseInterface() = default;
+  DatabaseInterface(const DatabaseInterface&) = delete;
+  DatabaseInterface(DatabaseInterface&&) = delete;
+
   virtual ~DatabaseInterface() = default;
+
+  DatabaseInterface& operator=(const DatabaseInterface&) = delete;
+  DatabaseInterface& operator=(DatabaseInterface&&) = delete;
 
   /**
    * @name Data Reading & Writing
@@ -54,8 +152,7 @@ public:
    *        The relative or absolute path to the masterlist file that should be
    *        loaded.
    */
-  virtual void LoadMasterlist(
-      const std::filesystem::path& masterlistPath) = 0;
+  virtual void LoadMasterlist(const std::filesystem::path& masterlistPath) = 0;
 
   /**
    * @brief Loads the masterlist and masterlist prelude from the paths
@@ -92,7 +189,7 @@ public:
    *        written. Otherwise, data will be written.
    */
   virtual void WriteUserMetadata(const std::filesystem::path& outputFile,
-                                 const bool overwrite) const = 0;
+                                 const MetadataWriteOptions& options) const = 0;
 
   /**
    * @brief Writes a minimal metadata file that only contains plugins with
@@ -105,13 +202,25 @@ public:
    *        written. Otherwise, data will be written.
    */
   virtual void WriteMinimalList(const std::filesystem::path& outputFile,
-                                const bool overwrite) const = 0;
+                                const MetadataWriteOptions& options) const = 0;
 
   /**
    * @brief Evaluate the given condition string.
    * @param condition A condition string.
    */
   virtual bool Evaluate(const std::string& condition) const = 0;
+
+  /**
+   * @brief Clears the cache of metadata condition evaluation results.
+   * @details As many conditions involve reading files and/or directories,
+   *          libloot caches the results of condition evaluation and reuses
+   *          those cached results in subsequent evaluations.
+   *
+   *          Clearing the condition cache means that the next time a condition
+   *          is evaluated, it will be evaluated from scratch instead of using a
+   *          cached result.
+   */
+  virtual void ClearConditionCache() = 0;
 
   /**
    * @}
@@ -122,22 +231,69 @@ public:
   /**
    * @brief Gets the Bash Tags that are listed in the loaded metadata lists.
    * @details Bash Tag suggestions can include Bash Tags not in this list.
-   * @returns A set of Bash Tag names.
+   * @param includeUserMetadata
+   *        If true, any Bash Tag metadata present in the userlist is included
+   *        in the returned metadata, otherwise the metadata returned only
+   *        includes metadata from the masterlist.
+   * @returns The Bash Tag names, which may include duplicates.
    */
-  virtual std::vector<std::string> GetKnownBashTags() const = 0;
+  virtual std::vector<std::string> GetKnownBashTags(
+      bool includeUserMetadata = true) const = 0;
 
   /**
-   * @brief Get all general messages listen in the loaded metadata lists.
+   * @brief Gets the Bash Tags that are listed in the loaded userlist.
+   * @details Bash Tag suggestions can include Bash Tags not in this list.
+   * @returns The Bash Tag names, which may include duplicates.
+   */
+  virtual std::vector<std::string> GetUserKnownBashTags() const = 0;
+
+  /**
+   * @brief Sets the known Bash Tags to store in the userlist, overwriting any
+   *        existing definitions there.
+   * @param bashTags
+   *        The Bash Tag names to set.
+   */
+  virtual void SetUserKnownBashTags(
+      const std::vector<std::string>& bashTags) = 0;
+
+  /**
+   * @brief Get all general messages listed in the loaded metadata lists.
+   * @param includeUserMetadata
+   *        If true, any general messages present in the userlist are included
+   *        in the returned metadata, otherwise the metadata returned only
+   *        includes metadata from the masterlist.
    * @param evaluateConditions
    *        If true, any metadata conditions are evaluated before the metadata
    *        is returned, otherwise unevaluated metadata is returned. Evaluating
    *        general message conditions also clears the condition cache before
    *        evaluating conditions.
-   * @returns A vector of messages supplied in the metadata lists but not
-   *          attached to any particular plugin.
+   * @returns The messages supplied in the metadata lists that are not attached
+   *          to any particular plugin.
    */
   virtual std::vector<Message> GetGeneralMessages(
+      bool includeUserMetadata = true,
       bool evaluateConditions = false) const = 0;
+
+  /**
+   * @brief Get all general messages listed in the loaded userlist.
+   * @param evaluateConditions
+   *        If true, any metadata conditions are evaluated before the metadata
+   *        is returned, otherwise unevaluated metadata is returned. Evaluating
+   *        general message conditions also clears the condition cache before
+   *        evaluating conditions.
+   * @returns A vector of messages supplied in the userlist but not attached to
+   *          any particular plugin.
+   */
+  virtual std::vector<Message> GetUserGeneralMessages(
+      bool evaluateConditions = false) const = 0;
+
+  /**
+   * @brief Sets the general messages to store in the userlist, replacing any
+   *        messages already stored there.
+   * @param messages
+   *        The messages to set.
+   */
+  virtual void SetUserGeneralMessages(const std::vector<Message>& messages) = 0;
 
   /**
    * @brief Gets the groups that are defined in the loaded metadata lists.
@@ -145,16 +301,16 @@ public:
    *        If true, any group metadata present in the userlist is included in
    *        the returned metadata, otherwise the metadata returned only includes
    *        metadata from the masterlist.
-   * @returns An vector of Group objects. Each Group's name is unique, if a
-   *          group has masterlist and user metadata the two are merged into a
-   *          single group object.
+   * @returns The Group objects. Each Group's name is unique, if a group has
+   *          masterlist and user metadata the two are merged into a single
+   *          group object.
    */
   virtual std::vector<Group> GetGroups(
       bool includeUserMetadata = true) const = 0;
 
   /**
    * @brief Gets the groups that are defined or extended in the loaded userlist.
-   * @returns An unordered set of Group objects.
+   * @returns The Group objects.
    */
   virtual std::vector<Group> GetUserGroups() const = 0;
 
@@ -162,7 +318,7 @@ public:
    * @brief Sets the group definitions to store in the userlist, overwriting any
    *        existing definitions there.
    * @param groups
-   *        The unordered set of Group objects to set.
+   *        The Group objects to set.
    */
   virtual void SetUserGroups(const std::vector<Group>& groups) = 0;
 
@@ -227,17 +383,29 @@ public:
       bool evaluateConditions = false) const = 0;
 
   /**
-   * @brief Sets a plugin's user metadata, overwriting any existing user
-   *        metadata.
+   * @brief Sets a plugin's user metadata.
    * @param pluginMetadata
-   *        The user metadata you want to set, with plugin.Name() being the
-   *        filename of the plugin the metadata is for.
+   *        The user metadata you want to set, with plugin.GetName() being the
+   *        filename of the plugin the metadata is for, or a regex that matches
+   *        the relevant filenames.
+   *
+   *        If the plugin metadata's name is not a regex name, any existing user
+   *        metadata for that plugin name will be replaced.
+   *
+   *        If the plugin metadata has a regex name, the given metadata object
+   *        will be appended to the list of regex metadata entries, and any
+   *        existing entries with the same regex name will be retained.
    */
   virtual void SetPluginUserMetadata(const PluginMetadata& pluginMetadata) = 0;
 
   /**
    * @brief Discards all loaded user metadata for the plugin with the given
    *        filename.
+   * @details Does not discard any plugin metadata with plugin name regexes
+   *          that match the given filename.
+   *
+   *          Has no effect if the given plugin name contains any of the
+   *          characters `:\*?|`.
    * @param plugin
    *        The filename of the plugin for which all user-added metadata
    *        should be deleted.

@@ -110,6 +110,7 @@ class LootAsync {
     this.makeProxy('getUserGroups');
     this.makeProxy('setUserGroups');
     this.makeProxy('getGeneralMessages');
+    this.makeProxy('clearConditionCache');
     this.makeProxy('setLogLevel');
 
     this.id = this.generateId();

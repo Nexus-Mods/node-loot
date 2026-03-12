@@ -22,7 +22,7 @@
                 "<!(node -p \"require('node-addon-api').include_dir\")"
             ],
             "libraries": [
-                "-l../loot_api/loot"
+                "-l../loot_api/libloot"
             ],
             'cflags!': ['-fno-exceptions', '-g', '-O0'],
             'cflags_cc!': ['-fno-exceptions'],
