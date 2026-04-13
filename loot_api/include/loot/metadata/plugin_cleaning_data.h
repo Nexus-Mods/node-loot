@@ -3,7 +3,7 @@
     A load order optimisation tool for Oblivion, Skyrim, Fallout 3 and
     Fallout: New Vegas.
 
-    Copyright (C) 2012-2016    WrinklyNinja
+    Copyright (C) 2012-2026 Oliver Hamlet
 
     This file is part of LOOT.
 
@@ -73,6 +73,8 @@ public:
    *         The number of deleted references found in the plugin.
    * @param  nav
    *         The number of deleted navmeshes found in the plugin.
+   * @param  condition
+   *         A condition string.
    */
   LOOT_API explicit PluginCleaningData(
       uint32_t crc,
