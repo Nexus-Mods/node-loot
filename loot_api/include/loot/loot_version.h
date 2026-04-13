@@ -3,7 +3,7 @@
 A load order optimisation tool for Oblivion, Skyrim, Fallout 3 and
 Fallout: New Vegas.
 
-Copyright (C) 2014-2016    WrinklyNinja
+Copyright (C) 2014-2026 Oliver Hamlet
 
 This file is part of LOOT.
 
@@ -37,7 +37,7 @@ inline constexpr unsigned int LIBLOOT_VERSION_MAJOR = 0;
 inline constexpr unsigned int LIBLOOT_VERSION_MINOR = 29;
 
 /** @brief libloot's patch version number. */
-inline constexpr unsigned int LIBLOOT_VERSION_PATCH = 1;
+inline constexpr unsigned int LIBLOOT_VERSION_PATCH = 3;
 
 /**
  * @brief Get the library version.
