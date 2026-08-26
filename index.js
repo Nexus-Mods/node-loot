@@ -1,4 +1,4 @@
-net = require('net');
+const net = require('net');
 const path = require('path');
 
 const { Loot, IsCompatible, SetLogLevel } = require('./build/Release/node-loot');
