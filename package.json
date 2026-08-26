@@ -25,7 +25,7 @@
     "autogypi": "^0.2.2",
     "lodash": "^4.17.21",
     "node-addon-api": "^8.1.0",
-    "node-gyp": "^10.2.0",
+    "node-gyp": "12.3.0",
     "prebuild-install": "^7.1.2"
   }
 }
