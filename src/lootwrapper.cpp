@@ -199,11 +199,13 @@ Napi::Value Loot::loadLists(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value Loot::loadPlugins(const Napi::CallbackInfo &info) {
-  std::vector<std::string> plugins;
+  // take the names as wide strings: std::filesystem::path decodes a narrow string using the
+  // process code page, which mangles the utf-8 the js side sends.
+  std::vector<std::wstring> plugins;
   bool headersOnly;
   unpackArgs(info, plugins, headersOnly);
   std::vector<std::filesystem::path> pluginPaths;
-  std::transform(plugins.begin(), plugins.end(), std::back_inserter(pluginPaths), [](const std::string& str) {
+  std::transform(plugins.begin(), plugins.end(), std::back_inserter(pluginPaths), [](const std::wstring& str) {
     return std::filesystem::path(str);
   });
   try {
