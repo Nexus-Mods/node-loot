@@ -9,7 +9,7 @@
   "scripts": {
     "upload": "prebuild -r napi -t 9 -a x64 --prepack codesign",
     "rebuild": "autogypi && node-gyp rebuild",
-    "install": "prebuild-install -r napi -t 9 -a x64 || npm run rebuild",
+    "install": "prebuild-install -r napi -t 9 -a x64 || (autogypi && node-gyp rebuild)",
     "test": "vitest run"
   },
   "author": "Black Tree Gaming Ltd.",
