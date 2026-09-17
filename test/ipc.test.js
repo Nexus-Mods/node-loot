@@ -115,6 +115,20 @@ describe('LootAsync message framing', () => {
     expect(result).toBe('answered');
   });
 
+  // a broken pipe is the one failure that is literally "the IPC failed", so it says so by name
+  it('fails a waiting call with the code the socket broke on', async () => {
+    const loot = await connect();
+
+    const outcome = await new Promise((resolve) => {
+      loot.getUserGroups((err) => resolve(err));
+      loot.socket.destroy(Object.assign(new Error('connection reset'), { code: 'ECONNRESET' }));
+    });
+
+    expect(outcome.name).toBe('RemoteDied');
+    expect(outcome.call).toBe('getUserGroups');
+    expect(outcome.code).toBe('ECONNRESET');
+  });
+
   // a child that dies answers nothing, so the calls waiting on it have to be failed from this side
   it('fails every pending call when the child dies', async () => {
     const loot = await connect(

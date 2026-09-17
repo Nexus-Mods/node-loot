@@ -39,12 +39,14 @@ class AlreadyClosed extends Error {
 }
 
 class RemoteDied extends Error {
-  constructor(call) {
+  constructor(call, code) {
     super('LOOT process died');
     Error.captureStackTrace(this, this.constructor);
 
     this.name = this.constructor.name;
     this.call = call;
+    // the socket error that ended it, where one was reported before it closed
+    this.code = code;
   }
 }
 
@@ -82,6 +84,8 @@ class LootAsync {
     this.dataBuffer = '';
     // the call the worker is answering, named on the errors that end it
     this.currentCall = undefined;
+    // the code of the socket error that closed the pipe, if one was reported
+    this.socketErrorCode = undefined;
     // a read can end mid-character; the decoder holds the incomplete sequence back until the
     // rest arrives
     this.decoder = new StringDecoder('utf8');
@@ -176,11 +180,10 @@ class LootAsync {
             }
           })
           .on('error', err => {
-            if (this.currentCallback !== undefined) {
-              this.failCurrent(err);
-            } else {
-              this.logCallback(4, err.message);
-            }
+            // a socket error closes the socket, so the calls waiting on it are failed by the
+            // close handler; this keeps the reason to tell them why
+            this.socketErrorCode = err.code;
+            this.logCallback(4, err.message);
           })
           .on('close', () => {
             // nothing more is coming from the child, so every call waiting on it fails here
@@ -193,7 +196,7 @@ class LootAsync {
             this.currentCall = undefined;
             for (const { call, callback } of pending) {
               if (callback !== undefined) {
-                callback(new RemoteDied(call));
+                callback(new RemoteDied(call, this.socketErrorCode));
               }
             }
           });
