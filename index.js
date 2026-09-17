@@ -1,9 +1,8 @@
 const net = require('net');
 const path = require('path');
+const { StringDecoder } = require('string_decoder');
 
 const { Loot, IsCompatible, SetLogLevel } = require('./build/Release/node-loot');
-
-const CHUNK_SIZE = 32 * 1024;
 
 const LogLevel = {
   trace: 0,
@@ -40,11 +39,24 @@ class AlreadyClosed extends Error {
 }
 
 class RemoteDied extends Error {
-  constructor() {
+  constructor(call) {
     super('LOOT process died');
     Error.captureStackTrace(this, this.constructor);
 
     this.name = this.constructor.name;
+    this.call = call;
+  }
+}
+
+// the worker answered with something that is not a message
+class InvalidResponse extends Error {
+  constructor(call, frameBytes, detail) {
+    super(`Invalid response to "${call}": ${detail}`);
+    Error.captureStackTrace(this, this.constructor);
+
+    this.name = this.constructor.name;
+    this.call = call;
+    this.frameBytes = frameBytes;
   }
 }
 
@@ -68,6 +80,11 @@ class LootAsync {
     this.logCallback = logCallback;
     this.didClose = false;
     this.dataBuffer = '';
+    // the call the worker is answering, named on the errors that end it
+    this.currentCall = undefined;
+    // a read can end mid-character; the decoder holds the incomplete sequence back until the
+    // rest arrives
+    this.decoder = new StringDecoder('utf8');
     if (onFork !== undefined) {
       this.onFork = onFork;
     } else {
@@ -124,7 +141,7 @@ class LootAsync {
           socket
           .on('data', data => {
             try {
-              this.dataBuffer += data.toString();
+              this.dataBuffer += this.decoder.write(data);
               const messages = this.dataBuffer.split('\uFFFF');
               // Keep incomplete chunk (last element after split if no trailing delimiter)
               if (!this.dataBuffer.endsWith('\uFFFF')) {
@@ -132,22 +149,52 @@ class LootAsync {
               } else {
                 this.dataBuffer = '';
               }
-              // Process each complete message
+              // the call a frame in this read may still answer, and the first frame that was no
+              // answer at all
+              const answering = this.currentCallback;
+              let unreadable;
               for (const msg of messages) {
-                if (msg.length > 0) {
-                  this.handleResponse(JSON.parse(msg));
+                if (msg.length === 0) {
+                  continue;
                 }
+                let response;
+                try {
+                  response = JSON.parse(msg);
+                } catch (err) {
+                  unreadable ??= new InvalidResponse(this.currentCall, msg.length, err.message);
+                  continue;
+                }
+                this.handleResponse(response);
+              }
+              // a log frame can be the unreadable one, so the call only fails if nothing in the
+              // read answered it
+              if (unreadable !== undefined && this.currentCallback === answering) {
+                this.failCurrent(unreadable);
               }
             } catch (err) {
               this.logCallback(4, err.message);
             }
           })
           .on('error', err => {
-            if (!!this.currentCallback) {
-              this.currentCallback(err);
-              this.currentCallback = undefined;
+            if (this.currentCallback !== undefined) {
+              this.failCurrent(err);
             } else {
               this.logCallback(4, err.message);
+            }
+          })
+          .on('close', () => {
+            // nothing more is coming from the child, so every call waiting on it fails here
+            const pending = [
+              { call: this.currentCall, callback: this.currentCallback },
+              ...this.queue.map((entry) => ({ call: entry.message.type, callback: entry.callback })),
+            ];
+            this.queue = [];
+            this.currentCallback = undefined;
+            this.currentCall = undefined;
+            for (const { call, callback } of pending) {
+              if (callback !== undefined) {
+                callback(new RemoteDied(call));
+              }
             }
           });
         })
@@ -219,26 +266,27 @@ class LootAsync {
     }
   }
 
+  // fail the call being answered and move on to the next one
+  failCurrent(err) {
+    const callback = this.currentCallback;
+    this.currentCallback = undefined;
+    this.currentCall = undefined;
+    this.processQueue();
+    if (callback !== undefined) {
+      callback(err);
+    }
+  }
+
   deliver(message, callback) {
     this.currentCallback = callback;
+    this.currentCall = message.type;
     const handleError = err => {
       if (!!err) {
-        if (!!this.currentCallback) {
-          if (err.code === 'EPIPE') {
-            this.currentCallback(new RemoteDied());
-          } else {
-            this.currentCallback(err);
-          }
-        }
-        this.processQueue();
+        this.failCurrent(err.code === 'EPIPE' ? new RemoteDied(this.currentCall) : err);
       }
     };
     try {
-      const data = JSON.stringify(message) + '\uFFFF';
-      // Chunk large messages to avoid Windows named pipe size limits
-      for (let i = 0; i < data.length; i += CHUNK_SIZE) {
-        this.socket.write(data.slice(i, i + CHUNK_SIZE), handleError);
-      }
+      this.socket.write(JSON.stringify(message) + '\uFFFF', handleError);
     } catch (err) {
       handleError(err);
     }
