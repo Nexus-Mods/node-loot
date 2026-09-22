@@ -1,4 +1,4 @@
-const fs = require('fs');
+const crypto = require('crypto');
 const net = require('net');
 const os = require('os');
 const path = require('path');
@@ -14,26 +14,14 @@ const LogLevel = {
   error: 4,
 };
 
-function getIpcPath(id) {
+// the endpoint the worker connects to: a named pipe on Windows, elsewhere a unix socket in the
+// user's runtime directory, which the desktop spec keeps private, or the temp directory without one
+function ipcPath() {
+  const id = crypto.randomUUID();
   if (process.platform === 'win32') {
     return `\\\\?\\pipe\\loot-ipc-${id}`;
   }
-
-  return path.join(os.tmpdir(), `loot-ipc-${id}.sock`);
-}
-
-function cleanupIpcPath(ipcPath) {
-  if (process.platform === 'win32') {
-    return;
-  }
-
-  try {
-    fs.unlinkSync(ipcPath);
-  } catch (err) {
-    if (err.code !== 'ENOENT') {
-      throw err;
-    }
-  }
+  return path.join(process.env.XDG_RUNTIME_DIR ?? os.tmpdir(), `loot-ipc-${id}.sock`);
 }
 
 // interface IPluginsNotLoadedArgs {
@@ -158,13 +146,11 @@ class LootAsync {
     this.makeProxy('clearConditionCache');
     this.makeProxy('setLogLevel');
 
-    this.id = this.generateId();
-    this.ipcPath = getIpcPath(this.id);
+    this.ipcPath = ipcPath();
     this.ipc = new net.Server();
     try {
       // this seems to fail for some users with EINVAL. why?
       // May be a wine-only problem but that's not confirmed
-      cleanupIpcPath(this.ipcPath);
       this.ipc.listen(this.ipcPath, () => {
         this.ipc.on('connection', socket => {
           this.socket = socket;
@@ -248,15 +234,6 @@ class LootAsync {
     }
   }
 
-  generateId() {
-    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    let res = [];
-    for (let i = 0; i < 8; ++i) {
-      res.push(chars[Math.floor(Math.random() * chars.length)]);
-    }
-    return res.join('');
-  }
-
   close() {
     if (this.didClose) {
       return;
@@ -264,12 +241,8 @@ class LootAsync {
 
     this.enqueue({ type: 'terminate' }, () => {
       this.worker = undefined;
-      if (this.ipc) {
-        this.ipc.close(() => cleanupIpcPath(this.ipcPath));
-        this.ipc = undefined;
-      } else {
-        cleanupIpcPath(this.ipcPath);
-      }
+      // closing the server removes a unix socket's file
+      this.ipc.close();
     });
     this.didClose = true;
   }
