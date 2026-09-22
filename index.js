@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const fs = require('fs');
 const net = require('net');
 const os = require('os');
 const path = require('path');
@@ -14,14 +15,27 @@ const LogLevel = {
   error: 4,
 };
 
-// the endpoint the worker connects to: a named pipe on Windows, elsewhere a unix socket in the
-// user's runtime directory, which the desktop spec keeps private, or the temp directory without one
+// where the worker's socket goes: the user's runtime directory, which the desktop spec keeps
+// private, when there is a usable one, otherwise the temp directory
+function socketDir() {
+  const runtimeDir = process.env.XDG_RUNTIME_DIR;
+  if (runtimeDir !== undefined) {
+    try {
+      fs.accessSync(runtimeDir, fs.constants.W_OK);
+      return runtimeDir;
+    } catch (err) {
+      // inherited from another user, or from a session that no longer exists
+    }
+  }
+  return os.tmpdir();
+}
+
+// the endpoint the worker connects to: a named pipe on Windows, a unix socket elsewhere
 function ipcPath() {
   const id = crypto.randomUUID();
-  if (process.platform === 'win32') {
-    return `\\\\?\\pipe\\loot-ipc-${id}`;
-  }
-  return path.join(process.env.XDG_RUNTIME_DIR ?? os.tmpdir(), `loot-ipc-${id}.sock`);
+  return process.platform === 'win32'
+    ? `\\\\?\\pipe\\loot-ipc-${id}`
+    : path.join(socketDir(), `loot-ipc-${id}.sock`);
 }
 
 // interface IPluginsNotLoadedArgs {
