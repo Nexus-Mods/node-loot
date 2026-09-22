@@ -63,7 +63,7 @@
                   "-std=c++20"
                 ],
                 "ldflags": [
-                  "-Wl,-rpath,\\$$ORIGIN/../../loot_api"
+                  "-Wl,-rpath,\\$$ORIGIN:\\$$ORIGIN/../../loot_api"
                 ],
                 "libraries": [
                   "-L<(module_root_dir)/loot_api",

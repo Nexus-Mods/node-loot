@@ -14,7 +14,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-24.04]
+        # the oldest image GitHub still hosts, so the libloot build's glibc floor stays low
+        os: [windows-latest, ubuntu-22.04]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -35,9 +36,19 @@ jobs:
           path: libloot
 
       - if: runner.os == 'Linux'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            libloot/target
+          key: libloot-${{ env.LIBLOOT_VERSION }}-${{ matrix.os }}
+
+      - if: runner.os == 'Linux'
         working-directory: libloot/cpp
         run: |
-          cmake -DCMAKE_BUILD_TYPE=Release -B build
+          cmake -DCMAKE_BUILD_TYPE=Release -DLIBLOOT_BUILD_TESTS=OFF -B build
           cmake --build build --parallel
           cp --dereference build/libloot.so.0 "$GITHUB_WORKSPACE/loot_api/libloot.so.0"
 
