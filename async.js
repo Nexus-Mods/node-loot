@@ -18,7 +18,7 @@ process.on('uncaughtException', error => {
 
 let currentLogLevel = 2; // default: info (matches previous hardcoded filter)
 
-const client = net.connect(`\\\\?\\pipe\\loot-ipc-${process.argv[2]}`, (arg) => {
+const client = net.connect(process.argv[2], (arg) => {
   let instance;
   let dataBuffer = '';
   // a read can end mid-character; the decoder holds the incomplete sequence back until the

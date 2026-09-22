@@ -4,9 +4,9 @@ const net = require('net');
 const { StringDecoder } = require('string_decoder');
 
 // mode is either a repeat count for the reply, or the name of a way to fail
-const [, , id, mode] = process.argv;
+const [, , ipcPath, mode] = process.argv;
 
-const client = net.connect(`\\\\?\\pipe\\loot-ipc-${id}`, () => {
+const client = net.connect(ipcPath, () => {
   const decoder = new StringDecoder('utf8');
   let dataBuffer = '';
 
