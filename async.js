@@ -40,13 +40,7 @@ const client = net.connect(`\\\\?\\pipe\\loot-ipc-${process.argv[2]}`, (arg) => 
         send({});
         process.exit(0);
       } else {
-        if (event.type === 'loadPlugins') {
-          SetLogLevel(4); // suppress BSA hash collision warnings during plugin loading
-          result = instance[event.type](...event.args);
-          SetLogLevel(currentLogLevel);
-        } else {
-          result = instance[event.type](...event.args);
-        }
+        result = instance[event.type](...event.args);
       }
       send({ result });
     } catch (error) {
