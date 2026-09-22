@@ -5,16 +5,15 @@ on:
     branches: [master]
   pull_request:
 
-env:
-  # the release whose Windows binaries loot_api holds; the Linux job builds the same tag
-  LIBLOOT_VERSION: 0.29.6
+permissions:
+  contents: read
 
 jobs:
   build:
     strategy:
       fail-fast: false
       matrix:
-        # the oldest image GitHub still hosts, so the libloot build's glibc floor stays low
+        # the oldest Linux image GitHub hosts, see .github/actions/build-libloot
         os: [windows-latest, ubuntu-22.04]
     runs-on: ${{ matrix.os }}
 
@@ -26,32 +25,10 @@ jobs:
           node-version: 22
           cache: yarn
 
-      # LOOT publishes no Linux binary, so the C++ wrapper is built from the release tag with the
-      # cmake invocation libloot's own CI uses; the SONAME is libloot.so.0
+      # rebuilt rather than taken from loot_api, so the sources under test always link against a
+      # library of exactly the version the headers describe
       - if: runner.os == 'Linux'
-        uses: actions/checkout@v4
-        with:
-          repository: loot/libloot
-          ref: ${{ env.LIBLOOT_VERSION }}
-          path: libloot
-
-      - if: runner.os == 'Linux'
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry/index
-            ~/.cargo/registry/cache
-            ~/.cargo/git/db
-            libloot/target
-          key: libloot-${{ env.LIBLOOT_VERSION }}-${{ matrix.os }}
-
-      - if: runner.os == 'Linux'
-        working-directory: libloot/cpp
-        run: |
-          cmake -DCMAKE_BUILD_TYPE=Release -DLIBLOOT_BUILD_TESTS=OFF -B build
-          cmake --build build --parallel
-          cp --dereference build/libloot.so.0 "$GITHUB_WORKSPACE/loot_api/libloot.so.0"
-          strip --strip-unneeded "$GITHUB_WORKSPACE/loot_api/libloot.so.0"
+        uses: ./.github/actions/build-libloot
 
       # the package install script prefers a published prebuild, which would leave the sources under
       # test unbuilt, so skip it and compile the addon explicitly
@@ -60,9 +37,3 @@ jobs:
       - run: yarn run rebuild
 
       - run: yarn test
-
-      - if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v4
-        with:
-          name: libloot-${{ env.LIBLOOT_VERSION }}-linux-x64
-          path: loot_api/libloot.so.0
