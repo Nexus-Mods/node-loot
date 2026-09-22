@@ -51,6 +51,7 @@ jobs:
           cmake -DCMAKE_BUILD_TYPE=Release -DLIBLOOT_BUILD_TESTS=OFF -B build
           cmake --build build --parallel
           cp --dereference build/libloot.so.0 "$GITHUB_WORKSPACE/loot_api/libloot.so.0"
+          strip --strip-unneeded "$GITHUB_WORKSPACE/loot_api/libloot.so.0"
 
       # the package install script prefers a published prebuild, which would leave the sources under
       # test unbuilt, so skip it and compile the addon explicitly
