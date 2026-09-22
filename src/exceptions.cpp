@@ -1,5 +1,4 @@
 #include "exceptions.h"
-#include "string_cast.h"
 #include "util.h"
 #include <napi.h>
 #include <optional>
@@ -37,7 +36,7 @@ Napi::Error ErrnoException(const Napi::Env &env, unsigned long lastError, const 
 
 #ifdef _WIN32
   std::wstring errStr = strerror(lastError);
-  std::string err = toMB(errStr.c_str(), CodePage::UTF8, errStr.size());
+  std::string err = Napi::String::New(env, reinterpret_cast<const char16_t*>(errStr.c_str())).Utf8Value();
 #else
   std::string err = strerror(lastError);
 #endif

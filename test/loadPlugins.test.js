@@ -12,6 +12,7 @@ const NON_ASCII_PLUGINS = [
   '日本語テスト.esp', // outside latin-1
   'emoji🎮test.esp', // outside the basic multilingual plane
 ];
+const NON_ASCII_FOLDER = 'Spiele ö 日本語 🎮';
 const ALL_PLUGINS = [MASTER, ASCII_PLUGIN, ...NON_ASCII_PLUGINS];
 
 // The smallest plugin libloot accepts: a TES4 record header, the HEDR subrecord carrying the plugin
@@ -99,10 +100,8 @@ describe('loadPlugins', () => {
 
 // every path the js side hands over: the game and its local folder, and the metadata lists
 describe('paths with non-ascii characters', () => {
-  const FOLDER = 'Spiele ö 日本語 🎮';
-
   it('opens a game installed under one', () => {
-    const { gamePath, dataPath, localPath } = makeGameDir(FOLDER);
+    const { gamePath, dataPath, localPath } = makeGameDir(NON_ASCII_FOLDER);
     fs.writeFileSync(path.join(dataPath, ASCII_PLUGIN), pluginBytes());
     const loot = new Loot('skyrimse', gamePath, localPath, 'en', () => {});
 
@@ -112,13 +111,10 @@ describe('paths with non-ascii characters', () => {
   });
 
   it('loads a masterlist from one', () => {
-    const { gamePath, localPath } = makeGameDir(FOLDER);
+    const { gamePath, localPath } = makeGameDir(NON_ASCII_FOLDER);
     const masterlist = path.join(gamePath, 'masterlist.yaml');
     // a group assignment proves the file was parsed, not merely found
     fs.writeFileSync(masterlist, [
-      'groups:',
-      '  - name: Gruppe ü',
-      '    after: [default]',
       'plugins:',
       `  - name: '${ASCII_PLUGIN}'`,
       '    group: Gruppe ü',

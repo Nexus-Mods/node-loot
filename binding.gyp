@@ -10,8 +10,6 @@
                 "src/lootwrapper.h",
                 "src/exceptions.cpp",
                 "src/exceptions.h",
-                "src/string_cast.cpp",
-                "src/string_cast.h",
                 "src/napi_helpers.cpp",
                 "src/napi_helpers.h",
                 "src/util.cpp",

@@ -1,4 +1,5 @@
 #include <napi.h>
+#include <concepts>
 #include <filesystem>
 #include <utility>
 
@@ -85,20 +86,14 @@ template<typename T> struct Tag {};
  */
 template<typename T> void convertArg(Tag<T>, T &out, const Napi::CallbackInfo &info, int idx);
 
-template<>
-void convertArg<std::string>(Tag<std::string>, std::string &out, const Napi::CallbackInfo &info, int idx) {
+// the types a js string converts to
+template<typename T>
+  requires std::same_as<T, std::string> || std::same_as<T, std::filesystem::path>
+void convertArg(Tag<T>, T &out, const Napi::CallbackInfo &info, int idx) {
   if (!info[idx].IsString()) {
     throw Napi::Error::New(info.Env(), format("parameter %d expected to be a string", idx + 1));
   }
-  out = fromNAPI<std::string>(info[idx]);
-}
-
-template<>
-void convertArg<std::filesystem::path>(Tag<std::filesystem::path>, std::filesystem::path &out, const Napi::CallbackInfo &info, int idx) {
-  if (!info[idx].IsString()) {
-    throw Napi::Error::New(info.Env(), format("parameter %d expected to be a string", idx + 1));
-  }
-  out = fromNAPI<std::filesystem::path>(info[idx]);
+  out = fromNAPI<T>(info[idx]);
 }
 
 template<>
