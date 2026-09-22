@@ -6,7 +6,7 @@ See https://github.com/loot/loot for LOOT itself
 # Caveats
 
 This doesn't support the entire API and the API has been changed in a few places to fit better in a node.js environment.
-For easier distribution, this currently includes build artifacts (.dll and .lib as well as headers) for loot-api.
+For easier distribution, this includes libloot in binary form (see loot_api/readme.txt).
 
 # Async
 
@@ -16,34 +16,10 @@ to the second process where they will be queued and processed in sequence.
 
 # Keeping this module up to date
 
-The following procedure should be followed to ensure a smooth transition to a new version of the LOOT API.
+[1] Run the "vendor libloot" workflow from the Actions tab with the libloot release version. It replaces the Windows binaries and headers in loot_api with the official release, builds and strips the Linux library from the same tag (LOOT publishes no Linux binary), increments this module's version and pushes a `vendor/libloot-<version>` branch. Open the pull request from the link in the run's summary; one the workflow opened itself would start no CI run.
 
-[1] Create a new branch based on the current master/main and clone it locally.
+[2] On that pull request, go through https://loot-api.readthedocs.io/en/latest/api/changelog.html for each release since the previous version and check src/lootwrapper.cpp against any API change: renamed or removed functions, changed parameters. The wrapper function names match the API functions unless renamed. CI builds and tests the addon on Windows and Linux against the new library.
 
-[2] Download the latest 64bit API release from https://github.com/loot/libloot/releases and replace the contents of the loot_api folder with the contents of the new release.
+[3] Merge once CI is green.
 
-[3] Go to https://loot-api.readthedocs.io/en/latest/api/changelog.html#id1 and go through the changelog of each incremental API release (since the last version) to see what changed.
-
-[4] Go to src/lootwrapper.cpp and verify whether any of the changed API functionality could potentially affect the module's wrapper. The wrapper function names will match the API functions (unless renamed) Things like changed function parameters, newly added/renamed functions should be reflected in the lootwrapper.cpp file as required. It's usually safe to assume that the return values will not change as LOOT is quite robust at this point and is widely used by Vortex and other applications.
-
-[5] Increment the version of this module in the package.json file.
-
-[6] Commit your changes to your new branch.
-
-The below steps are only valid for Vortex. Please make sure you have a functioning development build of the source code.
-
-[7] Open the package.json file in the gamebryo-plugin-management extension and change the loot dependency from `"loot": "Nexus-Mods/node-loot"` to `"loot": "Nexus-Mods/node-loot#YOUR_BRANCH",` (obviously change the Nexus-Mods/node-loot part if your repo is located somewhere else)
-
-[8] Run `yarn install` to ensure the package manager pulls your updated loot module and `yarn build`. 
-
-[9] Run your Vortex development build and test all relevant functionality depending on the changes made to the LOOT API as noted in the changelogs.
-
-[10] Once all relevant functionality has been fully tested, submit a pull request.
-
-[10.1] Go back to the gamebryo-plugin-management extension and ensure the package file's loot dependency change is reverted. It's a good idea to `rm -rf node_modules` just in case.
-
-[11] Once the PR has been merged, go to the gamebryo-plugin-management extension directory and run `yarn upgrade-interactive` - use the interface to upgrade the loot dependency to the latest version.
-
-[12] Increment the version of the gamebryo-plugin-management extension and submit a PR. The PR should include an updated `package.json` and `yarn.lock` files.
-
-[13] Once merged - make sure to update the gamebryo-plugin-management submodule.
+For Vortex: pin `loot` in pnpm-workspace.yaml (the catalog entry and the built-dependencies entry) to the merge commit, run `pnpm install`, and test the plugin list, plugin details and sorting on a development build before opening the Vortex pull request.

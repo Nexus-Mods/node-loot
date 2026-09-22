@@ -10,8 +10,6 @@
                 "src/lootwrapper.h",
                 "src/exceptions.cpp",
                 "src/exceptions.h",
-                "src/string_cast.cpp",
-                "src/string_cast.h",
                 "src/napi_helpers.cpp",
                 "src/napi_helpers.h",
                 "src/util.cpp",
@@ -20,9 +18,6 @@
             "include_dirs": [
                 "./loot_api/include",
                 "<!(node -p \"require('node-addon-api').include_dir\")"
-            ],
-            "libraries": [
-                "-l../loot_api/libloot"
             ],
             'cflags!': ['-fno-exceptions', '-g', '-O0'],
             'cflags_cc!': ['-fno-exceptions'],
@@ -49,6 +44,7 @@
                   "WINVER=0x600"
                 ],
                 "libraries": [
+                  "-l../loot_api/libloot",
                   "-DelayLoad:node.exe",
                 ],
                 'msvs_settings': {
@@ -59,6 +55,18 @@
                     'LinkTimeCodeGeneration': 1
                   }
                 }
+              }],
+              ["OS=='linux'", {
+                "cflags_cc": [
+                  "-std=c++20"
+                ],
+                "ldflags": [
+                  "-Wl,-rpath,\\$$ORIGIN:\\$$ORIGIN/../../loot_api"
+                ],
+                "libraries": [
+                  "-L../loot_api",
+                  "-l:libloot.so.0"
+                ]
               }]
             ]
         }

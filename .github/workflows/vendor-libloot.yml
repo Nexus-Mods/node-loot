@@ -1,0 +1,47 @@
+name: vendor libloot
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: the libloot release to vendor, e.g. 0.29.6
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  vendor:
+    # the oldest Linux image GitHub hosts, see .github/actions/build-libloot
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # the Windows binaries and the headers are the official release, unmodified
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "${{ inputs.version }}" -R loot/libloot -p "libloot-${{ inputs.version }}-win64.7z" -D release
+          7z x -orelease release/*.7z
+          src="release/libloot-${{ inputs.version }}-win64"
+          cp "$src/bin/libloot.dll" "$src/lib/libloot.lib" "$src/lib/libloot.pdb" loot_api/
+          rm -rf loot_api/include
+          cp -r "$src/include" loot_api/include
+          rm -rf release
+
+      - uses: ./.github/actions/build-libloot
+
+      - run: yarn version --patch --no-git-tag-version
+
+      # the branch is pushed, not turned into a pull request: one the workflow token opened would
+      # start no CI run, so a person opens it from the link in the run summary
+      - run: |
+          branch="vendor/libloot-${{ inputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add loot_api package.json
+          git commit -m "update to libloot ${{ inputs.version }}"
+          git push --force origin "$branch"
+          echo "Open the pull request: https://github.com/${{ github.repository }}/compare/$branch?expand=1" >> "$GITHUB_STEP_SUMMARY"

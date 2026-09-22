@@ -7,12 +7,11 @@
 #include <memory>
 #include <iostream>
 #include <clocale>
-#ifdef WIN32
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
 #include "exceptions.h"
-#include "string_cast.h"
 #include "util.h"
 #include "napi_helpers.h"
 
@@ -136,7 +135,7 @@ Loot::Loot(const Napi::CallbackInfo &info)
   , m_LogCallback(Napi::ThreadSafeFunction::New(info.Env(), info[4].As<Napi::Function>(), "logcb", 0, 1))
 {
   std::string game, language;
-  std::wstring gamePath, gameLocalPath;
+  std::filesystem::path gamePath, gameLocalPath;
   unpackArgs(info, game, gamePath, gameLocalPath, language);
 
   m_Language = language;
@@ -159,7 +158,7 @@ Loot::Loot(const Napi::CallbackInfo &info)
 
 
     auto gameId = convertGameId(info.Env(), game);
-    m_Game = loot::CreateGameHandle(gameId, std::filesystem::path(gamePath), std::filesystem::path(gameLocalPath));
+    m_Game = loot::CreateGameHandle(gameId, gamePath, gameLocalPath);
   } catch (const std::filesystem::filesystem_error &e) {
     throw ErrnoException(info.Env(), e.code().value(), __FUNCTION__, reinterpret_cast<const char*>(e.path1().generic_u8string().c_str()));
   } catch (const std::exception &e) {
@@ -177,7 +176,7 @@ Napi::Value Loot::loadLists(const Napi::CallbackInfo &info) {
    * loadMasterlist, loadMasterlistWithPrelude and loadUserlist.
    * We're going to consolidate both calls in this function for now.
   */
-  std::wstring masterlistPath, userlistPath, preludePath;
+  std::filesystem::path masterlistPath, userlistPath, preludePath;
   unpackArgs(info, masterlistPath, userlistPath, preludePath);
 
   try {
@@ -199,15 +198,9 @@ Napi::Value Loot::loadLists(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value Loot::loadPlugins(const Napi::CallbackInfo &info) {
-  // take the names as wide strings: std::filesystem::path decodes a narrow string using the
-  // process code page, which mangles the utf-8 the js side sends.
-  std::vector<std::wstring> plugins;
-  bool headersOnly;
-  unpackArgs(info, plugins, headersOnly);
   std::vector<std::filesystem::path> pluginPaths;
-  std::transform(plugins.begin(), plugins.end(), std::back_inserter(pluginPaths), [](const std::wstring& str) {
-    return std::filesystem::path(str);
-  });
+  bool headersOnly;
+  unpackArgs(info, pluginPaths, headersOnly);
   try {
     m_Game->LoadPlugins(pluginPaths, headersOnly);
   } catch (const std::filesystem::filesystem_error &e) {
@@ -224,8 +217,6 @@ Napi::Value Loot::getPluginMetadata(const Napi::CallbackInfo &info) {
   unpackArgs<1>(info, pluginName, includeUserMetadata, evaluateConditions);
 
   try {
-    Napi::Value res = Napi::Object::New(info.Env());
-
     std::optional<loot::PluginMetadata> meta = m_Game->GetDatabase().GetPluginMetadata(pluginName, includeUserMetadata, evaluateConditions);
     if (meta.has_value()) {
       // previously throw an exception here but this is *not* an error, it happens for all plugins
@@ -307,6 +298,8 @@ Napi::Value Loot::sortPlugins(const Napi::CallbackInfo &info) {
   } catch (const std::exception &e) {
     throw LOOTError(info.Env(), "sortPlugins", e.what());
   }
+
+  return info.Env().Undefined();
 }
 
 Napi::Value Loot::setLoadOrder(const Napi::CallbackInfo &info) {
@@ -412,7 +405,7 @@ Napi::Value Loot::clearConditionCache(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value SetErrorLanguageEN(const Napi::CallbackInfo &info) {
-#ifdef WIN32
+#ifdef _WIN32
   ULONG count = 1;
   WCHAR wszLanguages[32];
   wsprintfW(wszLanguages, L"%04X%c", MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT), 0);

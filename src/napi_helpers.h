@@ -1,5 +1,7 @@
 #include <napi.h>
-#include "string_cast.h"
+#include <concepts>
+#include <filesystem>
+#include <utility>
 
 template<typename T>
 Napi::Value toNAPI(const Napi::Env &env, const T &input);
@@ -59,12 +61,13 @@ std::string fromNAPI(const Napi::Value &info) {
   return info.ToString().Utf8Value();
 }
 
-#ifdef _WIN32
 template<>
-std::wstring fromNAPI(const Napi::Value &info) {
-  return u8Tou16(info.ToString().Utf8Value());
+std::filesystem::path fromNAPI(const Napi::Value &info) {
+  // js strings arrive as utf-8; a char8_t source decodes as such on every platform, where a plain
+  // char source goes through the process code page on Windows
+  const std::string utf8 = info.ToString().Utf8Value();
+  return std::filesystem::path(reinterpret_cast<const char8_t*>(utf8.c_str()));
 }
-#endif
 
 template<>
 int fromNAPI(const Napi::Value &info) {
@@ -83,20 +86,14 @@ template<typename T> struct Tag {};
  */
 template<typename T> void convertArg(Tag<T>, T &out, const Napi::CallbackInfo &info, int idx);
 
-template<>
-void convertArg<std::string>(Tag<std::string>, std::string &out, const Napi::CallbackInfo &info, int idx) {
+// the types a js string converts to
+template<typename T>
+  requires std::same_as<T, std::string> || std::same_as<T, std::filesystem::path>
+void convertArg(Tag<T>, T &out, const Napi::CallbackInfo &info, int idx) {
   if (!info[idx].IsString()) {
     throw Napi::Error::New(info.Env(), format("parameter %d expected to be a string", idx + 1));
   }
-  out = fromNAPI<std::string>(info[idx]);
-}
-
-template<>
-void convertArg<std::wstring>(Tag<std::wstring>, std::wstring &out, const Napi::CallbackInfo &info, int idx) {
-  if (!info[idx].IsString()) {
-    throw Napi::Error::New(info.Env(), format("parameter %d expected to be a string", idx + 1));
-  }
-  out = fromNAPI<std::wstring>(info[idx]);
+  out = fromNAPI<T>(info[idx]);
 }
 
 template<>
@@ -126,7 +123,7 @@ void convertArg(Tag<std::vector<T>>, std::vector<T> &out, const Napi::CallbackIn
 
 template<size_t I = 0, typename T0, typename... TR>
 void convertRec(const Napi::CallbackInfo &info, int requiredCount, T0 &out, TR &... rest) {
-  if ((requiredCount > I) || (info.Length() > I)) {
+  if (std::cmp_greater(requiredCount, I) || (info.Length() > I)) {
     convertArg(Tag<T0>(), out, info, I);
   }
   if constexpr (sizeof...(rest) > 0) {

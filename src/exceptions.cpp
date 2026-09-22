@@ -1,10 +1,9 @@
 #include "exceptions.h"
-#include "string_cast.h"
 #include "util.h"
 #include <napi.h>
 #include <optional>
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 
 std::wstring strerror(unsigned long errorno) {
@@ -31,13 +30,13 @@ std::wstring strerror(unsigned long errorno) {
   }
 }
 
-#endif // WIN32
+#endif // _WIN32
 
 Napi::Error ErrnoException(const Napi::Env &env, unsigned long lastError, const char * func, const char * path) {
 
-#ifdef WIN32
+#ifdef _WIN32
   std::wstring errStr = strerror(lastError);
-  std::string err = toMB(errStr.c_str(), CodePage::UTF8, errStr.size());
+  std::string err = Napi::String::New(env, reinterpret_cast<const char16_t*>(errStr.c_str())).Utf8Value();
 #else
   std::string err = strerror(lastError);
 #endif

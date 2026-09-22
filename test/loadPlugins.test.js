@@ -12,6 +12,7 @@ const NON_ASCII_PLUGINS = [
   '日本語テスト.esp', // outside latin-1
   'emoji🎮test.esp', // outside the basic multilingual plane
 ];
+const NON_ASCII_FOLDER = 'Spiele ö 日本語 🎮';
 const ALL_PLUGINS = [MASTER, ASCII_PLUGIN, ...NON_ASCII_PLUGINS];
 
 // The smallest plugin libloot accepts: a TES4 record header, the HEDR subrecord carrying the plugin
@@ -94,6 +95,36 @@ describe('loadPlugins', () => {
     // libloot escapes non-ascii bytes in its messages, so match on the utf-8 of "ä"
     expect(() => loot.loadPlugins(['nicht dä.esp'], true))
       .toThrow(/nicht d\\xc3\\xa4\.esp/);
+  });
+});
+
+// every path the js side hands over: the game and its local folder, and the metadata lists
+describe('paths with non-ascii characters', () => {
+  it('opens a game installed under one', () => {
+    const { gamePath, dataPath, localPath } = makeGameDir(NON_ASCII_FOLDER);
+    fs.writeFileSync(path.join(dataPath, ASCII_PLUGIN), pluginBytes());
+    const loot = new Loot('skyrimse', gamePath, localPath, 'en', () => {});
+
+    loot.loadPlugins([ASCII_PLUGIN], true);
+
+    expect(loot.getPlugin(ASCII_PLUGIN).name).toBe(ASCII_PLUGIN);
+  });
+
+  it('loads a masterlist from one', () => {
+    const { gamePath, localPath } = makeGameDir(NON_ASCII_FOLDER);
+    const masterlist = path.join(gamePath, 'masterlist.yaml');
+    // a group assignment proves the file was parsed, not merely found
+    fs.writeFileSync(masterlist, [
+      'plugins:',
+      `  - name: '${ASCII_PLUGIN}'`,
+      '    group: Gruppe ü',
+      '',
+    ].join('\n'));
+    const loot = new Loot('skyrimse', gamePath, localPath, 'en', () => {});
+
+    loot.loadLists(masterlist, '', '');
+
+    expect(loot.getPluginMetadata(ASCII_PLUGIN, true, false).group).toBe('Gruppe ü');
   });
 });
 

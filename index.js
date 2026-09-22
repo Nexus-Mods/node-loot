@@ -1,4 +1,7 @@
+const crypto = require('crypto');
+const fs = require('fs');
 const net = require('net');
+const os = require('os');
 const path = require('path');
 const { StringDecoder } = require('string_decoder');
 
@@ -11,6 +14,29 @@ const LogLevel = {
   warning: 3,
   error: 4,
 };
+
+// where the worker's socket goes: the user's runtime directory, which the desktop spec keeps
+// private, when there is a usable one, otherwise the temp directory
+function socketDir() {
+  const runtimeDir = process.env.XDG_RUNTIME_DIR;
+  if (runtimeDir !== undefined) {
+    try {
+      fs.accessSync(runtimeDir, fs.constants.W_OK);
+      return runtimeDir;
+    } catch (err) {
+      // inherited from another user, or from a session that no longer exists
+    }
+  }
+  return os.tmpdir();
+}
+
+// the endpoint the worker connects to: a named pipe on Windows, a unix socket elsewhere
+function ipcPath() {
+  const id = crypto.randomUUID();
+  return process.platform === 'win32'
+    ? `\\\\?\\pipe\\loot-ipc-${id}`
+    : path.join(socketDir(), `loot-ipc-${id}.sock`);
+}
 
 // interface IPluginsNotLoadedArgs {
 //   name: string;
@@ -134,12 +160,12 @@ class LootAsync {
     this.makeProxy('clearConditionCache');
     this.makeProxy('setLogLevel');
 
-    this.id = this.generateId();
+    this.ipcPath = ipcPath();
     this.ipc = new net.Server();
     try {
       // this seems to fail for some users with EINVAL. why?
       // May be a wine-only problem but that's not confirmed
-      this.ipc.listen(`\\\\?\\pipe\\loot-ipc-${this.id}`, () => {
+      this.ipc.listen(this.ipcPath, () => {
         this.ipc.on('connection', socket => {
           this.socket = socket;
           socket
@@ -208,12 +234,12 @@ class LootAsync {
         initCallback(err);
       });
     } catch (err) {
-      initCallback(new Error('failed to establish pipe'));
+      initCallback(new Error('failed to establish IPC endpoint'));
     }
   }
 
   restart(callback) {
-    this.worker = this.onFork(`${__dirname}${path.sep}async.js`, [this.id]);
+    this.worker = this.onFork(`${__dirname}${path.sep}async.js`, [this.ipcPath]);
     this.currentCallback = () => {
       this.enqueue({
         type: 'init',
@@ -222,18 +248,15 @@ class LootAsync {
     }
   }
 
-  generateId() {
-    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    let res = [];
-    for (let i = 0; i < 8; ++i) {
-      res.push(chars[Math.floor(Math.random() * chars.length)]);
-    }
-    return res.join('');
-  }
-
   close() {
+    if (this.didClose) {
+      return;
+    }
+
     this.enqueue({ type: 'terminate' }, () => {
       this.worker = undefined;
+      // closing the server removes a unix socket's file
+      this.ipc.close();
     });
     this.didClose = true;
   }

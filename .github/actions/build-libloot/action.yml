@@ -1,0 +1,38 @@
+name: build libloot for Linux
+description: >
+  Builds the C++ wrapper of the libloot version loot_api's headers name, from its release tag, and
+  writes it stripped to loot_api/libloot.so.0. LOOT publishes no Linux binary. The image the calling
+  job runs on sets the library's glibc floor, so callers use the oldest one GitHub hosts.
+
+runs:
+  using: composite
+  steps:
+    - id: version
+      shell: bash
+      run: |
+        version=$(sed -nE 's/.*LIBLOOT_VERSION_(MAJOR|MINOR|PATCH) = ([0-9]+);/\2/p' loot_api/include/loot/loot_version.h | paste -sd.)
+        echo "version=$version" >> "$GITHUB_OUTPUT"
+
+    - uses: actions/checkout@v4
+      with:
+        repository: loot/libloot
+        ref: ${{ steps.version.outputs.version }}
+        path: libloot
+
+    - uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry/index
+          ~/.cargo/registry/cache
+          ~/.cargo/git/db
+          libloot/target
+        key: libloot-${{ steps.version.outputs.version }}-${{ env.ImageOS }}
+
+    # the cmake invocation libloot's own CI uses, minus its test binary; the SONAME is libloot.so.0
+    - shell: bash
+      working-directory: libloot/cpp
+      run: |
+        cmake -DCMAKE_BUILD_TYPE=Release -DLIBLOOT_BUILD_TESTS=OFF -B build
+        cmake --build build --parallel
+        cp --dereference build/libloot.so.0 "$GITHUB_WORKSPACE/loot_api/libloot.so.0"
+        strip --strip-unneeded "$GITHUB_WORKSPACE/loot_api/libloot.so.0"

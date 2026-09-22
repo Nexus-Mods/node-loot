@@ -5,9 +5,17 @@ on:
     branches: [master]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   build:
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # the oldest Linux image GitHub hosts, see .github/actions/build-libloot
+        os: [windows-latest, ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v4
@@ -16,6 +24,11 @@ jobs:
         with:
           node-version: 22
           cache: yarn
+
+      # rebuilt rather than taken from loot_api, so the sources under test always link against a
+      # library of exactly the version the headers describe
+      - if: runner.os == 'Linux'
+        uses: ./.github/actions/build-libloot
 
       # the package install script prefers a published prebuild, which would leave the sources under
       # test unbuilt, so skip it and compile the addon explicitly
