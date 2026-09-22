@@ -5,9 +5,17 @@ on:
     branches: [master]
   pull_request:
 
+env:
+  # the release whose Windows binaries loot_api holds; the Linux job builds the same tag
+  LIBLOOT_VERSION: 0.29.6
+
 jobs:
   build:
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v4
@@ -17,6 +25,22 @@ jobs:
           node-version: 22
           cache: yarn
 
+      # LOOT publishes no Linux binary, so the C++ wrapper is built from the release tag with the
+      # cmake invocation libloot's own CI uses; the SONAME is libloot.so.0
+      - if: runner.os == 'Linux'
+        uses: actions/checkout@v4
+        with:
+          repository: loot/libloot
+          ref: ${{ env.LIBLOOT_VERSION }}
+          path: libloot
+
+      - if: runner.os == 'Linux'
+        working-directory: libloot/cpp
+        run: |
+          cmake -DCMAKE_BUILD_TYPE=Release -B build
+          cmake --build build --parallel
+          cp --dereference build/libloot.so.0 "$GITHUB_WORKSPACE/loot_api/libloot.so.0"
+
       # the package install script prefers a published prebuild, which would leave the sources under
       # test unbuilt, so skip it and compile the addon explicitly
       - run: yarn install --frozen-lockfile --ignore-scripts
@@ -24,3 +48,9 @@ jobs:
       - run: yarn run rebuild
 
       - run: yarn test
+
+      - if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: libloot-${{ env.LIBLOOT_VERSION }}-linux-x64
+          path: loot_api/libloot.so.0

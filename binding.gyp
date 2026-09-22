@@ -67,7 +67,7 @@
                 ],
                 "libraries": [
                   "-L<(module_root_dir)/loot_api",
-                  "-lloot"
+                  "-l:libloot.so.0"
                 ]
               }]
             ]
