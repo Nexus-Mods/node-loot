@@ -1,5 +1,6 @@
 #include <napi.h>
-#include "string_cast.h"
+#include <filesystem>
+#include <utility>
 
 template<typename T>
 Napi::Value toNAPI(const Napi::Env &env, const T &input);
@@ -59,12 +60,13 @@ std::string fromNAPI(const Napi::Value &info) {
   return info.ToString().Utf8Value();
 }
 
-#ifdef _WIN32
 template<>
-std::wstring fromNAPI(const Napi::Value &info) {
-  return u8Tou16(info.ToString().Utf8Value());
+std::filesystem::path fromNAPI(const Napi::Value &info) {
+  // js strings arrive as utf-8; a char8_t source decodes as such on every platform, where a plain
+  // char source goes through the process code page on Windows
+  const std::string utf8 = info.ToString().Utf8Value();
+  return std::filesystem::path(reinterpret_cast<const char8_t*>(utf8.c_str()));
 }
-#endif
 
 template<>
 int fromNAPI(const Napi::Value &info) {
@@ -91,16 +93,14 @@ void convertArg<std::string>(Tag<std::string>, std::string &out, const Napi::Cal
   out = fromNAPI<std::string>(info[idx]);
 }
 
-#ifdef _WIN32
 template<>
-void convertArg<std::wstring>(Tag<std::wstring>, std::wstring &out, const Napi::CallbackInfo &info, int idx) {
+void convertArg<std::filesystem::path>(Tag<std::filesystem::path>, std::filesystem::path &out, const Napi::CallbackInfo &info, int idx) {
   if (!info[idx].IsString()) {
     throw Napi::Error::New(info.Env(), format("parameter %d expected to be a string", idx + 1));
   }
-  out = fromNAPI<std::wstring>(info[idx]);
+  out = fromNAPI<std::filesystem::path>(info[idx]);
 }
 
-#endif
 template<>
 void convertArg<bool>(Tag<bool>, bool &out, const Napi::CallbackInfo &info, int idx) {
   if (!info[idx].IsBoolean()) {
@@ -128,7 +128,7 @@ void convertArg(Tag<std::vector<T>>, std::vector<T> &out, const Napi::CallbackIn
 
 template<size_t I = 0, typename T0, typename... TR>
 void convertRec(const Napi::CallbackInfo &info, int requiredCount, T0 &out, TR &... rest) {
-  if (((requiredCount > 0) && (static_cast<size_t>(requiredCount) > I)) || (info.Length() > I)) {
+  if (std::cmp_greater(requiredCount, I) || (info.Length() > I)) {
     convertArg(Tag<T0>(), out, info, I);
   }
   if constexpr (sizeof...(rest) > 0) {

@@ -97,6 +97,41 @@ describe('loadPlugins', () => {
   });
 });
 
+// every path the js side hands over: the game and its local folder, and the metadata lists
+describe('paths with non-ascii characters', () => {
+  const FOLDER = 'Spiele ö 日本語 🎮';
+
+  it('opens a game installed under one', () => {
+    const { gamePath, dataPath, localPath } = makeGameDir(FOLDER);
+    fs.writeFileSync(path.join(dataPath, ASCII_PLUGIN), pluginBytes());
+    const loot = new Loot('skyrimse', gamePath, localPath, 'en', () => {});
+
+    loot.loadPlugins([ASCII_PLUGIN], true);
+
+    expect(loot.getPlugin(ASCII_PLUGIN).name).toBe(ASCII_PLUGIN);
+  });
+
+  it('loads a masterlist from one', () => {
+    const { gamePath, localPath } = makeGameDir(FOLDER);
+    const masterlist = path.join(gamePath, 'masterlist.yaml');
+    // a group assignment proves the file was parsed, not merely found
+    fs.writeFileSync(masterlist, [
+      'groups:',
+      '  - name: Gruppe ü',
+      '    after: [default]',
+      'plugins:',
+      `  - name: '${ASCII_PLUGIN}'`,
+      '    group: Gruppe ü',
+      '',
+    ].join('\n'));
+    const loot = new Loot('skyrimse', gamePath, localPath, 'en', () => {});
+
+    loot.loadLists(masterlist, '', '');
+
+    expect(loot.getPluginMetadata(ASCII_PLUGIN, true, false).group).toBe('Gruppe ü');
+  });
+});
+
 describe('sortPlugins', () => {
   it('sorts plugins whose file names contain non-ascii characters', () => {
     const loot = makeGame();
