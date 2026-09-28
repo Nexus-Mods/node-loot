@@ -143,18 +143,11 @@ describe('LootAsync', () => {
   it('loads and sorts non-ascii plugin names', async () => {
     const { gamePath, localPath } = makeGameWithPlugins();
 
-    const loot = await new Promise((resolve, reject) => {
-      LootAsync.create('skyrimse', gamePath, localPath, 'en', () => {}, undefined,
-        (err, res) => (err ? reject(err) : resolve(res)));
-    });
+    const loot = await LootAsync.create('skyrimse', gamePath, localPath, 'en', () => {});
     onTestFinished(() => loot.close());
 
-    await new Promise((resolve, reject) => {
-      loot.loadPlugins(ALL_PLUGINS, true, (err) => (err ? reject(err) : resolve()));
-    });
-    const sorted = await new Promise((resolve, reject) => {
-      loot.sortPlugins(ALL_PLUGINS, (err, res) => (err ? reject(err) : resolve(res)));
-    });
+    await loot.loadPlugins(ALL_PLUGINS, true);
+    const sorted = await loot.sortPlugins(ALL_PLUGINS);
 
     expect([...sorted].sort()).toEqual([...ALL_PLUGINS].sort());
   });

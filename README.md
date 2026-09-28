@@ -14,6 +14,8 @@ There is support for running commands asynchronously. The was this is implemente
 "asynchronous" LOOT instance, a second process is created. The LOOT instance in the initial process acts as a proxy, relaying instructions
 to the second process where they will be queued and processed in sequence.
 
+`LootAsync.create`, `restart` and the LOOT calls on the instance it resolves with return a promise for the second process's answer; `close` and `isClosed` are synchronous.
+
 # Keeping this module up to date
 
 [1] Run the "vendor libloot" workflow from the Actions tab with the libloot release version. It replaces the Windows binaries and headers in loot_api with the official release, builds and strips the Linux library from the same tag (LOOT publishes no Linux binary), increments this module's version and pushes a `vendor/libloot-<version>` branch. Open the pull request from the link in the run's summary; one the workflow opened itself would start no CI run.

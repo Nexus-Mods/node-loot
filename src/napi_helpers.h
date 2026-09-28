@@ -122,8 +122,9 @@ void convertArg(Tag<std::vector<T>>, std::vector<T> &out, const Napi::CallbackIn
 }
 
 template<size_t I = 0, typename T0, typename... TR>
-void convertRec(const Napi::CallbackInfo &info, int requiredCount, T0 &out, TR &... rest) {
-  if (std::cmp_greater(requiredCount, I) || (info.Length() > I)) {
+void convertRec(const Napi::CallbackInfo &info, std::size_t requiredCount, T0 &out, TR &... rest) {
+  // an optional parameter passed as null or undefined keeps its default; JSON carries undefined as null
+  if ((I < requiredCount) || !(info[I].IsNull() || info[I].IsUndefined())) {
     convertArg(Tag<T0>(), out, info, I);
   }
   if constexpr (sizeof...(rest) > 0) {
@@ -138,5 +139,5 @@ void unpackArgs(const Napi::CallbackInfo &info, T&... t) {
     throw Napi::Error::New(info.Env(), format("invalid number of parameters, expected %d", count));
   }
 
-  convertRec(info, requiredCount, t...);
+  convertRec(info, count, t...);
 }

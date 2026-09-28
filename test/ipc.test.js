@@ -1,9 +1,8 @@
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it, onTestFinished } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import { makeGameDir } from './helpers/gameDir.js';
-import { LootAsync } from '../index.js';
+import { connect } from './helpers/lootAsync.js';
 
 const STUB_CHILD = fileURLToPath(new URL('./helpers/stubChild.js', import.meta.url));
 
@@ -21,27 +20,13 @@ function countReplacementChars(str) {
   return (str.match(/�/g) ?? []).length;
 }
 
-async function connect(onFork) {
-  const { gamePath, localPath } = makeGameDir();
-  const loot = await new Promise((resolve, reject) => {
-    LootAsync.create('skyrimse', gamePath, localPath, 'en', () => {}, onFork,
-      (err, res) => (err ? reject(err) : resolve(res)));
-  });
-  onTestFinished(() => loot.close());
-  return loot;
-}
-
 describe('LootAsync message framing', () => {
   it('carries a name longer than one pipe read', async () => {
     const loot = await connect();
     const name = LONG_NAME;
 
-    await new Promise((resolve, reject) => {
-      loot.setUserGroups([userGroup(name)], (err) => (err ? reject(err) : resolve()));
-    });
-    const groups = await new Promise((resolve, reject) => {
-      loot.getUserGroups((err, res) => (err ? reject(err) : resolve(res)));
-    });
+    await loot.setUserGroups([userGroup(name)]);
+    const groups = await loot.getUserGroups();
 
     const roundTripped = groups.map((group) => group.name).find((n) => n.startsWith('grp'));
     expect(countReplacementChars(roundTripped)).toBe(0);
@@ -54,9 +39,7 @@ describe('LootAsync message framing', () => {
     const loot = await connect(
       (script, args) => spawn(process.execPath, [STUB_CHILD, ...args, String(STUB_REPLY_REPEATS)]));
 
-    const reply = await new Promise((resolve, reject) => {
-      loot.getUserGroups((err, res) => (err ? reject(err) : resolve(res)));
-    });
+    const reply = await loot.getUserGroups();
 
     expect(countReplacementChars(reply)).toBe(0);
     expect(reply).toBe('ö🎮'.repeat(STUB_REPLY_REPEATS));
@@ -67,12 +50,8 @@ describe('LootAsync message framing', () => {
     const loot = await connect();
     const groups = Array.from({ length: 20000 }, (_, i) => userGroup(`group-${i}-ö🎮`));
 
-    await new Promise((resolve, reject) => {
-      loot.setUserGroups(groups, (err) => (err ? reject(err) : resolve()));
-    });
-    const roundTripped = await new Promise((resolve, reject) => {
-      loot.getUserGroups((err, res) => (err ? reject(err) : resolve(res)));
-    });
+    await loot.setUserGroups(groups);
+    const roundTripped = await loot.getUserGroups();
 
     const names = roundTripped.map((group) => group.name).filter((n) => n.startsWith('group-'));
     expect(names).toEqual(groups.map((group) => group.name));
@@ -83,11 +62,9 @@ describe('LootAsync message framing', () => {
     const loot = await connect();
     const names = Array.from({ length: 4000 }, (_, i) => `missing-plugin-${i}-ö🎮.esp`);
 
-    const outcome = await new Promise((resolve) => {
-      loot.loadPlugins(names, true, (err) => resolve(err ?? null));
-    });
+    const outcome = await loot.loadPlugins(names, true).catch((err) => err);
 
-    expect(outcome === null || outcome instanceof Error).toBe(true);
+    expect(outcome === undefined || outcome instanceof Error).toBe(true);
   });
 
   // an unparseable frame answers the call no better than silence does
@@ -95,7 +72,7 @@ describe('LootAsync message framing', () => {
     const loot = await connect(
       (script, args) => spawn(process.execPath, [STUB_CHILD, ...args, 'garbage']));
 
-    const err = await new Promise((resolve) => loot.getUserGroups((e) => resolve(e)));
+    const err = await loot.getUserGroups().catch((e) => e);
 
     expect(err).toBeInstanceOf(Error);
     expect(err.name).toBe('InvalidResponse');
@@ -108,9 +85,7 @@ describe('LootAsync message framing', () => {
     const loot = await connect(
       (script, args) => spawn(process.execPath, [STUB_CHILD, ...args, 'garbage-log']));
 
-    const result = await new Promise((resolve, reject) => {
-      loot.getUserGroups((err, res) => (err ? reject(err) : resolve(res)));
-    });
+    const result = await loot.getUserGroups();
 
     expect(result).toBe('answered');
   });
@@ -119,10 +94,9 @@ describe('LootAsync message framing', () => {
   it('fails a waiting call with the code the socket broke on', async () => {
     const loot = await connect();
 
-    const outcome = await new Promise((resolve) => {
-      loot.getUserGroups((err) => resolve(err));
-      loot.socket.destroy(Object.assign(new Error('connection reset'), { code: 'ECONNRESET' }));
-    });
+    const pending = loot.getUserGroups().catch((err) => err);
+    loot.socket.destroy(Object.assign(new Error('connection reset'), { code: 'ECONNRESET' }));
+    const outcome = await pending;
 
     expect(outcome.name).toBe('RemoteDied');
     expect(outcome.call).toBe('getUserGroups');
@@ -135,8 +109,8 @@ describe('LootAsync message framing', () => {
       (script, args) => spawn(process.execPath, [STUB_CHILD, ...args, 'exit']));
 
     const outcomes = await Promise.all([
-      new Promise((resolve) => loot.getUserGroups((err) => resolve(err))),
-      new Promise((resolve) => loot.getGroups((err) => resolve(err))),
+      loot.getUserGroups().catch((err) => err),
+      loot.getGroups().catch((err) => err),
     ]);
 
     for (const err of outcomes) {
