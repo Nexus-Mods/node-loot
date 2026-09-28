@@ -46,12 +46,13 @@ function ipcPath() {
 // }
 class PluginNotLoaded extends Error {
   constructor(args) {
-    super(`Plugin not loaded: "${args.plugin}"; currently loaded: ${args.currentlyLoaded.join(', ')}`);
+    const currentlyLoaded = args.currentlyLoaded ?? [];
+    super(`Plugin not loaded: "${args.plugin}"; currently loaded: ${currentlyLoaded.join(', ')}`);
     Error.captureStackTrace(this, this.constructor);
     this.name = this.constructor.name;
     this.plugin = args.plugin;
     this.func = args.func;
-    this.currentlyLoaded = args.currentlyLoaded || [];
+    this.currentlyLoaded = currentlyLoaded;
   }
 }
 
@@ -89,18 +90,11 @@ class InvalidResponse extends Error {
 }
 
 class LootAsync {
-  static create(gameId, gamePath, gameLocalPath, language, logCallback, onFork, callback) {
-    try {
-      const res = new LootAsync(gameId, gamePath, gameLocalPath, language, logCallback, onFork, (err) => {
-        if (err !== null) {
-          callback(err);
-        } else {
-          callback(null, res);
-        }
-      });
-    } catch (err) {
-      callback(err);
-    }
+  static create(gameId, gamePath, gameLocalPath, language, logCallback, onFork) {
+    return new Promise((resolve, reject) => {
+      const res = new LootAsync(gameId, gamePath, gameLocalPath, language, logCallback, onFork,
+        (err) => (err ? reject(err) : resolve(res)));
+    });
   }
 
   constructor(gameId, gamePath, gameLocalPath, language, logCallback, onFork, callback) {
@@ -136,28 +130,19 @@ class LootAsync {
     let initCallback = (err) => {
       // ensure the init callback isn't called twice.
       initCallback = (err) => {
-        logCallback(4, err.message);
+        if (err) {
+          logCallback(4, err.message);
+        }
       }
       callback(err);
     }
 
-    this.makeProxy('updateFile');
-    this.makeProxy('getMasterlistRevision');
-    this.makeProxy('loadLists');
-    this.makeProxy('loadPlugins');
-    this.makeProxy('getPlugin');
-    this.makeProxy('getPluginMetadata');
-    this.makeProxy('sortPlugins');
-    this.makeProxy('setLoadOrder');
-    this.makeProxy('getLoadOrder');
-    this.makeProxy('loadCurrentLoadOrderState');
-    this.makeProxy('isPluginActive');
-    this.makeProxy('getGroups');
-    this.makeProxy('getGroupsPath');
-    this.makeProxy('getUserGroups');
-    this.makeProxy('setUserGroups');
-    this.makeProxy('getGeneralMessages');
-    this.makeProxy('clearConditionCache');
+    // every native method runs in the worker, which also answers setLogLevel itself
+    for (const name of Object.getOwnPropertyNames(Loot.prototype)) {
+      if (name !== 'constructor') {
+        this.makeProxy(name);
+      }
+    }
     this.makeProxy('setLogLevel');
 
     this.ipcPath = ipcPath();
@@ -228,7 +213,7 @@ class LootAsync {
           });
         })
 
-        this.restart(initCallback);
+        this.restart().then(() => initCallback(null), initCallback);
       })
       .on('error', (err) => {
         initCallback(err);
@@ -238,14 +223,11 @@ class LootAsync {
     }
   }
 
-  restart(callback) {
-    this.worker = this.onFork(`${__dirname}${path.sep}async.js`, [this.ipcPath]);
-    this.currentCallback = () => {
-      this.enqueue({
-        type: 'init',
-        args: this.initArgs,
-      }, callback);
-    }
+  restart() {
+    return new Promise((resolve) => {
+      this.worker = this.onFork(`${__dirname}${path.sep}async.js`, [this.ipcPath]);
+      this.currentCallback = () => resolve(this.request({ type: 'init', args: this.initArgs }));
+    });
   }
 
   close() {
@@ -266,19 +248,13 @@ class LootAsync {
   }
 
   makeProxy(name) {
-    this[name] = (...args) => {
-      let cb = args[args.length - 1];
-      if (typeof(cb) !== 'function') {
-        cb = undefined;
-      } else {
-        args = args.slice(0, args.length - 1);
-      }
+    this[name] = (...args) => this.request({ type: name, args });
+  }
 
-      this.enqueue({
-        type: name,
-        args,
-      }, cb);
-    };
+  request(message) {
+    return new Promise((resolve, reject) => {
+      this.enqueue(message, (err, result) => (err ? reject(err) : resolve(result)));
+    });
   }
 
   enqueue(message, callback) {
@@ -365,9 +341,12 @@ class LootAsync {
 
 module.exports = {
   AlreadyClosed,
+  InvalidResponse,
   LogLevel,
   Loot,
   LootAsync,
   IsCompatible,
+  PluginNotLoaded,
+  RemoteDied,
   SetLogLevel,
 };
