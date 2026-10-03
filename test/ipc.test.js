@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { connect } from './helpers/lootAsync.js';
 
 const STUB_CHILD = fileURLToPath(new URL('./helpers/stubChild.js', import.meta.url));
+const HOST = fileURLToPath(new URL('./helpers/host.cjs', import.meta.url));
 
 // a reply this long spans several of the reader's 64 KiB buffers, with a multi-byte character
 // straddling the first boundary
@@ -19,6 +20,31 @@ const LONG_NAME = 'grp' + 'ö🎮'.repeat(12000);
 function countReplacementChars(str) {
   return (str.match(/�/g) ?? []).length;
 }
+
+function isRunning(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+describe('LootAsync worker lifetime', () => {
+  it('exits when the host dies without closing it', async () => {
+    const host = spawn(process.execPath, [HOST]);
+    const workerPid = await new Promise((resolve) => host.stdout.once('data', (data) => resolve(Number(data))));
+
+    host.kill('SIGKILL');
+    for (let i = 0; i < 50 && isRunning(workerPid); ++i) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+
+    const stillRunning = isRunning(workerPid);
+    if (stillRunning) process.kill(workerPid);
+    expect(stillRunning).toBe(false);
+  });
+});
 
 describe('LootAsync message framing', () => {
   it('carries a name longer than one pipe read', async () => {
