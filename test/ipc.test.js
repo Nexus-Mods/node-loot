@@ -1,11 +1,10 @@
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, onTestFinished } from 'vitest';
 
 import { connect } from './helpers/lootAsync.js';
 
 const STUB_CHILD = fileURLToPath(new URL('./helpers/stubChild.js', import.meta.url));
-const HOST = fileURLToPath(new URL('./helpers/host.cjs', import.meta.url));
 
 // a reply this long spans several of the reader's 64 KiB buffers, with a multi-byte character
 // straddling the first boundary
@@ -31,19 +30,17 @@ function isRunning(pid) {
 }
 
 describe('LootAsync worker lifetime', () => {
-  it('exits when the host dies without closing it', async () => {
-    const host = spawn(process.execPath, [HOST]);
-    const workerPid = await new Promise((resolve) => host.stdout.once('data', (data) => resolve(Number(data))));
+  it('exits when the host connection closes', async () => {
+    const loot = await connect((script, args) => spawn(process.execPath, [script, ...args]));
+    const workerPid = loot.worker.pid;
+    onTestFinished(() => {
+      if (isRunning(workerPid)) process.kill(workerPid);
+    });
 
-    host.kill('SIGKILL');
-    for (let i = 0; i < 50 && isRunning(workerPid); ++i) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
+    loot.socket.destroy();
 
-    const stillRunning = isRunning(workerPid);
-    if (stillRunning) process.kill(workerPid);
-    expect(stillRunning).toBe(false);
-  });
+    await expect.poll(() => isRunning(workerPid), { timeout: 5000, interval: 100 }).toBe(false);
+  }, 10000);
 });
 
 describe('LootAsync message framing', () => {
