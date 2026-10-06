@@ -74,3 +74,6 @@ const client = net.connect(process.argv[2], (arg) => {
   // signal readiness to process messages
   send({ result: null });
 });
+
+// the host is gone (closed or crashed), nobody can reach this worker anymore
+client.on('close', () => process.exit(0));

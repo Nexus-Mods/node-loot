@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, onTestFinished } from 'vitest';
 
 import { connect } from './helpers/lootAsync.js';
 
@@ -19,6 +19,29 @@ const LONG_NAME = 'grp' + 'ö🎮'.repeat(12000);
 function countReplacementChars(str) {
   return (str.match(/�/g) ?? []).length;
 }
+
+function isRunning(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+describe('LootAsync worker lifetime', () => {
+  it('exits when the host connection closes', async () => {
+    const loot = await connect((script, args) => spawn(process.execPath, [script, ...args]));
+    const workerPid = loot.worker.pid;
+    onTestFinished(() => {
+      if (isRunning(workerPid)) process.kill(workerPid);
+    });
+
+    loot.socket.destroy();
+
+    await expect.poll(() => isRunning(workerPid), { timeout: 5000, interval: 100 }).toBe(false);
+  }, 10000);
+});
 
 describe('LootAsync message framing', () => {
   it('carries a name longer than one pipe read', async () => {
