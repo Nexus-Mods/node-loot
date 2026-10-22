@@ -152,9 +152,16 @@ class LootAsync {
       // May be a wine-only problem but that's not confirmed
       this.ipc.listen(this.ipcPath, () => {
         this.ipc.on('connection', socket => {
-          this.socket = socket;
+          if (this.socket !== undefined) {
+            socket.destroy();
+            return;
+          }
           socket
           .on('data', data => {
+            this.socket ??= socket;
+            if (socket !== this.socket) {
+              return;
+            }
             try {
               this.dataBuffer += this.decoder.write(data);
               const messages = this.dataBuffer.split('\uFFFF');
@@ -191,12 +198,18 @@ class LootAsync {
             }
           })
           .on('error', err => {
+            if (socket !== this.socket) {
+              return;
+            }
             // a socket error closes the socket, so the calls waiting on it are failed by the
             // close handler; this keeps the reason to tell them why
             this.socketErrorCode = err.code;
             this.logCallback(4, err.message);
           })
           .on('close', () => {
+            if (socket !== this.socket) {
+              return;
+            }
             // nothing more is coming from the child, so every call waiting on it fails here
             const pending = [
               { call: this.currentCall, callback: this.currentCallback },

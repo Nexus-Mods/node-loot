@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import net from 'node:net';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it, onTestFinished } from 'vitest';
 
@@ -41,6 +42,37 @@ describe('LootAsync worker lifetime', () => {
 
     await expect.poll(() => isRunning(workerPid), { timeout: 5000, interval: 100 }).toBe(false);
   }, 10000);
+});
+
+// other software, security products in particular, can open the pipe; only the worker may answer
+describe('LootAsync with another client on the pipe', () => {
+  function openAndClose(ipcPath) {
+    return new Promise((resolve) => {
+      const stray = net.connect(ipcPath, () => stray.destroy());
+      stray.on('close', resolve).on('error', () => {});
+    });
+  }
+
+  it('starts when another client opens the pipe before the worker is ready', async () => {
+    const loot = await connect((script, args) => {
+      const child = spawn(process.execPath, [STUB_CHILD, ...args, 'slow-ready']);
+      child.stdout.once('data', () => openAndClose(args[0]));
+      return child;
+    });
+
+    await expect(loot.getUserGroups()).resolves.toBe('');
+  });
+
+  it('keeps answering after another client opens and closes the pipe', async () => {
+    const loot = await connect();
+    const seen = new Promise((resolve) =>
+      loot.ipc.once('connection', (socket) => socket.once('close', resolve)));
+
+    await openAndClose(loot.ipcPath);
+    await seen;
+
+    await expect(loot.getUserGroups()).resolves.toEqual(expect.any(Array));
+  });
 });
 
 describe('LootAsync message framing', () => {

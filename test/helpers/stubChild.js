@@ -43,6 +43,14 @@ const client = net.connect(ipcPath, () => {
     }
   });
 
+  // a child that tells the test it is connected and holds its readiness back, so another client
+  // can open the pipe in between
+  if (mode === 'slow-ready') {
+    process.stdout.write('connected\n');
+    setTimeout(() => send({ result: null }), 200);
+    return;
+  }
+
   // signal readiness to process messages
   send({ result: null });
 });
