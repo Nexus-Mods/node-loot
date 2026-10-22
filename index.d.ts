@@ -49,6 +49,8 @@ export class LootAsync {
   private constructor();
   static create(gameId: string, gamePath: string, gameLocalPath: string, language: string, logCallback: LogCallback, onFork?: ForkFunction): Promise<LootAsync>;
   restart(): Promise<void>;
+  /** How many connections to the pipe were not the worker's. */
+  readonly strayConnections: number;
   close(): void;
   isClosed(): boolean;
   setLogLevel(level: LogLevel): Promise<void>;

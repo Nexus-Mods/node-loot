@@ -61,6 +61,7 @@ describe('LootAsync with another client on the pipe', () => {
     });
 
     await expect(loot.getUserGroups()).resolves.toBe('');
+    expect(loot.strayConnections).toBe(1);
   });
 
   it('keeps answering after another client opens and closes the pipe', async () => {
@@ -72,7 +73,40 @@ describe('LootAsync with another client on the pipe', () => {
     await seen;
 
     await expect(loot.getUserGroups()).resolves.toEqual(expect.any(Array));
+    expect(loot.strayConnections).toBe(1);
   });
+
+  it('counts no stray connection for the worker itself', async () => {
+    const loot = await connect();
+
+    await loot.getUserGroups();
+
+    expect(loot.strayConnections).toBe(0);
+  });
+});
+
+describe('LootAsync restart', () => {
+  it('replaces a live worker with a new one', async () => {
+    const pids = [];
+    const loot = await connect((script, args) => {
+      const child = spawn(process.execPath, [script, ...args]);
+      pids.push(child.pid);
+      return child;
+    });
+    onTestFinished(() => {
+      for (const pid of pids) {
+        if (isRunning(pid)) process.kill(pid);
+      }
+    });
+
+    await loot.restart();
+
+    expect(pids).toHaveLength(2);
+    await expect(loot.getUserGroups()).resolves.toEqual(expect.any(Array));
+    // the old worker lost its connection, which is its cue to exit
+    await expect.poll(() => isRunning(pids[0]), { timeout: 5000, interval: 100 }).toBe(false);
+    expect(loot.strayConnections).toBe(0);
+  }, 10000);
 });
 
 describe('LootAsync message framing', () => {

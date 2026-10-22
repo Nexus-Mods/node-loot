@@ -106,6 +106,8 @@ class LootAsync {
     this.currentCall = undefined;
     // the code of the socket error that closed the pipe, if one was reported
     this.socketErrorCode = undefined;
+    // how many connections to the pipe were not the worker's
+    this.strayConnections = 0;
     // a read can end mid-character; the decoder holds the incomplete sequence back until the
     // rest arrives
     this.decoder = new StringDecoder('utf8');
@@ -152,8 +154,10 @@ class LootAsync {
       // May be a wine-only problem but that's not confirmed
       this.ipc.listen(this.ipcPath, () => {
         this.ipc.on('connection', socket => {
+          // other software, security products in particular, can open the pipe too. The worker is
+          // the connection that speaks first, and no other connection may take its place
           if (this.socket !== undefined) {
-            socket.destroy();
+            this.strayConnection(socket);
             return;
           }
           socket
@@ -208,6 +212,7 @@ class LootAsync {
           })
           .on('close', () => {
             if (socket !== this.socket) {
+              this.strayConnection(socket);
               return;
             }
             // nothing more is coming from the child, so every call waiting on it fails here
@@ -236,8 +241,20 @@ class LootAsync {
     }
   }
 
+  // another process opened the pipe; counted so the host can tell telemetry how often that happens
+  strayConnection(socket) {
+    ++this.strayConnections;
+    this.logCallback(3, 'another process opened the LOOT pipe');
+    socket.destroy();
+  }
+
   restart() {
     return new Promise((resolve) => {
+      // a worker started over a live one takes its place on the pipe
+      if (this.socket !== undefined) {
+        this.socket.removeAllListeners('close').destroy();
+        this.socket = undefined;
+      }
       this.worker = this.onFork(`${__dirname}${path.sep}async.js`, [this.ipcPath]);
       this.currentCallback = () => resolve(this.request({ type: 'init', args: this.initArgs }));
     });
