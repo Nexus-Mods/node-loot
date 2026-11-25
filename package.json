@@ -1,6 +1,6 @@
 {
   "name": "loot",
-  "version": "7.0.2",
+  "version": "7.1.0",
   "description": "Wrapper around the LOOT library for sorting plugins of gamebryo games (Oblivion, Skyrim, Fallout 3/NV/4)",
   "repository": {
     "type": "git",
@@ -9,7 +9,7 @@
   "scripts": {
     "upload": "prebuild -r napi -t 9 -a x64 --prepack codesign",
     "rebuild": "autogypi && node-gyp rebuild",
-    "install": "prebuild-install -r napi -t 9 -a x64 || (autogypi && node-gyp rebuild)",
+    "install": "prebuild-install -r napi -t 9 || (autogypi && node-gyp rebuild)",
     "test": "vitest run"
   },
   "author": "Black Tree Gaming Ltd.",

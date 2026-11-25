@@ -1,9 +1,14 @@
 LOOT is being developed by "Ortham" at https://github.com/loot/libloot under the GPLv3.
 
-This directory holds libloot in binary form to simplify the build process.
+This directory holds libloot in binary form to simplify the build process. include/ is shared by
+all platforms; the libraries are in one directory per architecture, named as node names it
+(process.arch, which binding.gyp sees as target_arch).
 
-libloot.dll, libloot.lib, libloot.pdb and include/ are an unmodified copy of the official Windows
-release of the version named in include/loot/loot_version.h.
+All of it is built by the "vendor libloot" workflow from the sources of the version named in
+include/loot/loot_version.h:
 
-libloot.so.0 is the same version's C++ wrapper built from source by the "vendor libloot" workflow
-on ubuntu-22.04 (glibc 2.34, GLIBCXX 3.4.29) and stripped, since LOOT publishes no Linux binary.
+- include/ is that tag's cpp/include, unmodified.
+- x64/libloot.dll, x64/libloot.lib, arm64/libloot.dll and arm64/libloot.lib are its C++ wrapper,
+  built by .github/actions/build-libloot-windows.
+- x64/libloot.so.0 is its C++ wrapper, built on ubuntu-22.04 (glibc 2.34, GLIBCXX 3.4.29) and
+  stripped by .github/actions/build-libloot.

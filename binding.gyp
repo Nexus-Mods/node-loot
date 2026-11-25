@@ -43,8 +43,9 @@
                   "_HAS_EXCEPTIONS=1",
                   "WINVER=0x600"
                 ],
+                # each architecture's libloot is in loot_api/<arch>/ (see loot_api/readme.txt)
                 "libraries": [
-                  "-l../loot_api/libloot",
+                  "-l../loot_api/<(target_arch)/libloot",
                   "-DelayLoad:node.exe",
                 ],
                 'msvs_settings': {
@@ -61,10 +62,10 @@
                   "-std=c++20"
                 ],
                 "ldflags": [
-                  "-Wl,-rpath,\\$$ORIGIN:\\$$ORIGIN/../../loot_api"
+                  "-Wl,-rpath,\\$$ORIGIN:\\$$ORIGIN/../../loot_api/<(target_arch)"
                 ],
                 "libraries": [
-                  "-L../loot_api",
+                  "-L../loot_api/<(target_arch)",
                   "-l:libloot.so.0"
                 ]
               }]

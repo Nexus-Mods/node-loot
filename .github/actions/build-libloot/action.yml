@@ -1,8 +1,9 @@
 name: build libloot for Linux
 description: >
   Builds the C++ wrapper of the libloot version loot_api's headers name, from its release tag, and
-  writes it stripped to loot_api/libloot.so.0. LOOT publishes no Linux binary. The image the calling
-  job runs on sets the library's glibc floor, so callers use the oldest one GitHub hosts.
+  writes it stripped to loot_api/<arch>/libloot.so.0 for the runner's architecture. LOOT publishes
+  no Linux binary. The image the calling job runs on sets the library's glibc floor, so callers use
+  the oldest one GitHub hosts.
 
 runs:
   using: composite
@@ -34,5 +35,13 @@ runs:
       run: |
         cmake -DCMAKE_BUILD_TYPE=Release -DLIBLOOT_BUILD_TESTS=OFF -B build
         cmake --build build --parallel
-        cp --dereference build/libloot.so.0 "$GITHUB_WORKSPACE/loot_api/libloot.so.0"
-        strip --strip-unneeded "$GITHUB_WORKSPACE/loot_api/libloot.so.0"
+        # node's names for the architecture, which binding.gyp's target_arch uses
+        case "$(uname -m)" in
+          x86_64) arch=x64 ;;
+          aarch64) arch=arm64 ;;
+          *) echo "unsupported architecture $(uname -m)" >&2; exit 1 ;;
+        esac
+        out="$GITHUB_WORKSPACE/loot_api/$arch/libloot.so.0"
+        mkdir -p "$(dirname "$out")"
+        cp --dereference build/libloot.so.0 "$out"
+        strip --strip-unneeded "$out"
