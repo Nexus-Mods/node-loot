@@ -18,8 +18,7 @@ to the second process where they will be queued and processed in sequence.
 
 # Keeping this module up to date
 
-[1] Run the "vendor libloot" workflow from the Actions tab with the libloot release version. It replaces the Windows binaries and headers in loot_api with the official release, builds and strips the Linux library from the same tag (LOOT publishes no Linux binary), increments this module's version and pushes a `vendor/libloot-<version>` branch. Open the pull request from the link in the run's summary; one the workflow opened itself would start no CI run.
-
+[1] Run the "vendor libloot" workflow from the Actions tab with the libloot release version. It takes the headers from that release tag and builds the Windows (x64, arm64) and Linux libraries from its sources, increments this module's version and pushes a `vendor/libloot-<version>` branch. Open the pull request from the link in the run's summary; one the workflow opened itself would start no CI run.
 [2] On that pull request, go through https://loot-api.readthedocs.io/en/latest/api/changelog.html for each release since the previous version and check src/lootwrapper.cpp against any API change: renamed or removed functions, changed parameters. The wrapper function names match the API functions unless renamed. CI builds and tests the addon on Windows and Linux against the new library.
 
 [3] Merge once CI is green.
